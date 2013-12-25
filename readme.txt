@@ -1,6 +1,6 @@
 === Theatre ===
 Contributors: slimndap
-Tags: theatre, stage, venue, events, shows, concerts, tickets
+Tags: theatre, stage, venue, events, shows, concerts, tickets, ticketing
 Requires at least: 3.5
 Tested up to: 3.8
 Stable tag: trunk
@@ -22,7 +22,7 @@ The Theatre plugin is kept as simple as possible so it can be used for a wide va
 __What is included__
 
 * Admin screens for seasons, productions and events.
-* Default templates for productions (wip).
+* Default templates for productions.
 * Short codes for listings of productions and events (wip).
 
 __What is not included__
@@ -36,6 +36,7 @@ A lot! But most really cool things can easily be achieved by combining the Theat
 __What's next?__
 
 * Shortcodes for displaying event listings.
+* Documentation
 
 __Contributors Welcome__
 
@@ -55,5 +56,11 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 0.2 =
+* Default template for productions.
+* Several smart functions which can be used inside templates.
+
 = 0.1 =
 * Basic version of the plugin.
+
+

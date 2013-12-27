@@ -24,6 +24,7 @@ __What is included__
 * Admin screens for seasons, productions and events.
 * Default templates for productions.
 * Short codes for listings of productions and events (wip).
+* Widgets (wip)
 
 __What is not included__
 
@@ -35,8 +36,10 @@ A lot! But most really cool things can easily be achieved by combining the Theat
 
 __What's next?__
 
-* Shortcodes for displaying event listings.
 * Documentation
+* More shortcodes
+* Widgets
+* Settings
 
 __Contributors Welcome__
 
@@ -56,9 +59,13 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+=0.2.1=
+* Theatre now has it's own admin menu
+* New settings page
+
 = 0.2 =
-* Default template for productions.
 * Several smart functions which can be used inside templates.
+* Short code for listing of events.
 
 = 0.1 =
 * Basic version of the plugin.

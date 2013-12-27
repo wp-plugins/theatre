@@ -2,10 +2,13 @@
 
 class WPT_Setup {
 	function __construct() {
+		$this->options = get_option( 'wp_theatre' );
+
 		add_action( 'init', array($this,'init'));
-		add_filter('template_include', array($this, 'template_include')); 
 		add_action('the_content', array($this, 'the_content'));
 		add_action('wp', array($this, 'wp'));
+		
+		add_shortcode('wp_theatre_events', array($this,'shortcode_events'));
 	}
 
 	function init() {
@@ -17,7 +20,8 @@ class WPT_Setup {
 				),
 			'public' => true,
 			'has_archive' => true,
-			'supports' => array('title', 'editor', 'excerpt', 'thumbnail')
+			'show_in_menu'  => 'theatre',
+  			'supports' => array('title', 'editor', 'excerpt', 'thumbnail')
 			)
 		);
 		register_post_type( 'wp_theatre_event',
@@ -33,7 +37,8 @@ class WPT_Setup {
 			'public' => true,
 			'has_archive' => true,
 			'show_in_menu' => false,
-			'supports' => array('')
+			'supports' => array(''),
+			'show_in_nav_menus'=> false
 			)
 		);
 		register_post_type( 'wp_theatre_season',
@@ -44,7 +49,8 @@ class WPT_Setup {
 				),
 			'public' => true,
 			'has_archive' => true,
-			'supports' => array('title')
+			'supports' => array('title'),
+			'show_in_menu'  => 'theatre',
 			)
 		);
 	}	
@@ -53,25 +59,18 @@ class WPT_Setup {
 		$this->production = new WPT_Production();			
 	}
 	
-	function template_include($template){	
-		if ( is_singular(WPT_Production::post_type_name) ) {
-			$template_name = 'single-'.WPT_Production::post_type()->name.'.php';
-			$theme_template = locate_template(array($template_name), true);
-			
-			if(empty($theme_template)) {
-				return plugin_dir_path(__FILE__).'../templates/'.$template_name;
-			} else {
-				return '';
-			}
-		}
-		return $template;
-	}
-	
 	function the_content($content) {
 		if (is_singular(WPT_Production::post_type_name)) {
-			$content .= $this->production->render_events();
+			if (isset( $this->options['show_events'] ) && (esc_attr( $this->options['show_events'])=='yes')) {
+				$content .= $this->production->render_events();
+			}
 		}
 		return $content;
+	}
+	
+	function shortcode_events() {
+		global $wp_theatre;
+		return $wp_theatre->render_events();
 	}
 
 }

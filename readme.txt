@@ -30,7 +30,7 @@ __What is not included__
 
 A lot! But most really cool things can easily be achieved by combining the Theatre plugin with other popular plugins:
 
-* Caching - use [W3 Total Cache](http://wordpress.org/plugins/w3-total-cache/) (wip)
+* Caching - use [W3 Total Cache](http://wordpress.org/plugins/w3-total-cache/)
 * Fancy admin screens with extra fields - use [Pods Framework](http://pods.io/) and [Tabify Edit Screen](http://wordpress.org/plugins/tabify-edit-screen/)
 * Simple templating - use [Timber](http://jarednova.github.io/timber/)
 

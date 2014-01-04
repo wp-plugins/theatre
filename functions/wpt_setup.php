@@ -9,29 +9,38 @@ class WPT_Setup {
 		add_action('wp', array($this, 'wp'));
 		
 		add_shortcode('wp_theatre_events', array($this,'shortcode_events'));
+
+		register_activation_hook( __FILE__, array($this, 'activate' ));		
+
+		add_action( 'plugins_loaded', array($this,'plugins_loaded'));
 	}
 
 	function init() {
 		register_post_type( WPT_Production::post_type_name,
 			array(
 				'labels' => array(
-					'name' => __( 'Productions' ),
-					'singular_name' => __( 'Production' )
+					'name' => __( 'Productions','wp_theatre'),
+					'singular_name' => __( 'Production','wp_theatre')
 				),
-			'public' => true,
-			'has_archive' => true,
-			'show_in_menu'  => 'theatre',
-  			'supports' => array('title', 'editor', 'excerpt', 'thumbnail')
+				'public' => true,
+				'has_archive' => true,
+				'show_in_menu'  => 'theatre',
+				'show_in_admin_bar' => true,
+	  			'supports' => array('title', 'editor', 'excerpt', 'thumbnail'),
+	  			'rewrite' => array(
+	  				'slug' => 'production'
+	  			)
+	  			
 			)
 		);
 		register_post_type( 'wp_theatre_event',
 			array(
 				'labels' => array(
-					'name' => __( 'Events' ),
-					'singular_name' => __( 'Event' ),
-					'new_item' => __('New event'),
-					'add_new_item' => __('Add new event'),
-					'edit_item' => __('Edit event')
+					'name' => __( 'Events','wp_theatre'),
+					'singular_name' => __( 'Event','wp_theatre'),
+					'new_item' => __('New event','wp_theatre'),
+					'add_new_item' => __('Add new event','wp_theatre'),
+					'edit_item' => __('Edit event','wp_theatre')
 
 				),
 			'public' => true,
@@ -44,8 +53,8 @@ class WPT_Setup {
 		register_post_type( 'wp_theatre_season',
 			array(
 				'labels' => array(
-					'name' => __( 'Seasons' ),
-					'singular_name' => __( 'Season' )
+					'name' => __( 'Seasons','wp_theatre'),
+					'singular_name' => __( 'Season','wp_theatre')
 				),
 			'public' => true,
 			'has_archive' => true,
@@ -55,6 +64,10 @@ class WPT_Setup {
 		);
 	}	
 
+	function plugins_loaded(){
+		load_plugin_textdomain('wp_theatre', false, dirname( plugin_basename( __FILE__ ) ) . '/../lang/' );
+	}
+	
 	function wp() {
 		$this->production = new WPT_Production();			
 	}
@@ -73,8 +86,14 @@ class WPT_Setup {
 		return $wp_theatre->render_events();
 	}
 
+	function activate() {
+		$this->init();
+		flush_rewrite_rules();
+	}
+
 }
 
-new WPT_Setup();
+$WPT_Setup = new WPT_Setup();
+
 
 ?>

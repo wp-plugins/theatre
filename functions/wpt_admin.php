@@ -47,6 +47,13 @@ class WPT_Admin {
 	
 	function add_meta_boxes() {
 		add_meta_box(
+            'wp_theatre_sticky',
+            __('Display','wp_theatre'),
+            array($this,'meta_box_sticky'),
+            WPT_Production::post_type()->name,
+            'side'
+        ); 		
+		add_meta_box(
             'wp_theatre_events',
             WPT_Event::post_type()->labels->name,
             array($this,'meta_box_events'),
@@ -76,6 +83,19 @@ class WPT_Admin {
         ); 	
 	}
 	
+	function meta_box_sticky($production) {
+		echo '<label>';
+		
+		echo '<input type="checkbox" name="sticky"';
+		if (is_sticky()) {
+			echo ' checked="checked"';
+		}
+		echo ' />';
+		echo __('Stick this production to all listings.','wp_theatre');
+		
+		echo '</label>';
+	}
+
 	function meta_box_events($production) {
 		$production = new WPT_Production(get_the_id());
 		
@@ -253,9 +273,9 @@ class WPT_Admin {
 		);
 
 		$seasons = get_posts($args);
+		echo '<select name="'.WPT_Season::post_type_name.'">';
+		echo '<option></option>';
 		if (count($seasons)>0) {
-			echo '<select name="'.WPT_Season::post_type_name.'">';
-			echo '<option></option>';
 			foreach ($seasons as $season) {
 				echo '<option value="'.$season->ID.'"';
 				if (get_post_meta($production->ID,WPT_Season::post_type_name,true)==$season->ID) {
@@ -265,9 +285,9 @@ class WPT_Admin {
 				echo $season->post_title;
 				echo '</option>';
 			}
-			echo '</select>';
 
 		}
+		echo '</select>';
 	
 	}
 	
@@ -367,9 +387,15 @@ class WPT_Admin {
 
 		// Sanitize the user input.
 		$season = sanitize_text_field( $_POST[WPT_Season::post_type_name] );
+		
+		$sticky = '';
+		if (isset($_POST['sticky'])) {
+			$sticky = sanitize_text_field( $_POST['sticky'] );
+		}
 
 		// Update the meta field.
 		update_post_meta( $post_id, WPT_Season::post_type_name, $season );
+		update_post_meta( $post_id, 'sticky', $sticky );
 		
 		
 	}
@@ -400,7 +426,7 @@ class WPT_Admin {
         ?>
         <div class="wrap">
             <?php screen_icon(); ?>
-            <h2>Theatre <?php echo __('Settings');?></h2>           
+            <h2><?php echo __('Theatre','wp_theatre').' '.__('Settings');?></h2>           
             <form method="post" action="options.php">
             <?php
                 // This prints out all hidden setting fields
@@ -424,8 +450,11 @@ class WPT_Admin {
     function wp_add_dashboard_widget() {
     	global $wp_theatre;
 		$html = '';
+		
+		$html.= '<div class="events">';
+		
 		$html.= '<h4>'.__('Upcoming events','wp_theatre').'</h4>';
-		$html.= '<ul class="events">';
+		$html.= '<ul>';
 		foreach ($wp_theatre->get_events() as $event) {
 			$html.= '<li>';
 			$html.= $this->render_event($event);
@@ -435,16 +464,20 @@ class WPT_Admin {
 		$html.= '</ul>';
 		$html.= '<p><a href="'.get_bloginfo('url').'/wp-admin/post-new.php?post_type='.WPT_Event::post_type_name.'" class="button button-primary">'.WPT_Event::post_type()->labels->new_item.'</a></p>';	
 
+		$html.= '</div>'; //.events
+
+		$html.= '<div class="productions">';
 		$html.= '<h4>'.__('Current productions','wp_theatre').'</h4>';
-		$html.= '<ul class="productions">';
+		$html.= '<ul>';
 		foreach ($wp_theatre->get_productions() as $production) {
 			$html.= '<li>';
 			$html.= $this->render_production($production);
-
 			$html.= '</li>';
 		}
 		$html.= '</ul>';
 		$html.= '<p><a href="'.get_bloginfo('url').'/wp-admin/post-new.php?post_type='.WPT_Production::post_type_name.'" class="button button-primary">'.WPT_Production::post_type()->labels->new_item.'</a></p>';	
+
+		$html.= '</div>'; //.productions
 		echo $html;
     }
 
@@ -501,7 +534,7 @@ class WPT_Admin {
 			}
 		}
 		$html.= '</div>'; //.tickets
-
+		
 		$html.='</div>'; // .event
 		
 		return $html;	

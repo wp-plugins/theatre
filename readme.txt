@@ -16,6 +16,9 @@ Theme developers get three new PHP objects (Season, Production and Event) which 
 
 It is also possible to extend the functionality with other popular plug-ins.
 
+__International__
+Available in English, French and Dutch.
+
 __Scope__
 
 The Theatre plugin is kept as simple as possible so it can be used for a wide variety of event websites. 
@@ -59,11 +62,11 @@ This section describes how to install the plugin and get it working.
 
 __Productions and events__
 
-Theatre uses the _productions_ to group your _events_. 
+Theatre uses _productions_ to group your _events_. 
 
 Each production has it's own page and can have one or more events. 
 
-Events don't have their own pages. They only appear on pages with event listing.
+Events don't have their own pages. They only appear on pages with event listings.
 
 So if you run a theatre then 'The Sound Of Music' is a _production_ and the show this weekend is an _event_.
 
@@ -75,7 +78,7 @@ Theater comes with one widget. Place it in your sidebar to show a list of all up
 
 __Shortcodes__
 
-Theater come with one shortcode:
+Theatre comes with one shortcode:
 
 	[wp_theatre_events]
  
@@ -87,6 +90,10 @@ You can also add header above the listing:
 
  
 == Changelog ==
+
+= 0.2.6 =
+* Support for sticky productions.
+* Support for French language.
 
 = 0.2.5 =
 * Added CSS for shortcodes and widgets.

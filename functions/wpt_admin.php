@@ -8,6 +8,9 @@ class WPT_Admin {
 		add_action( 'delete_post',array( $this, 'delete_post' ));
 		add_action( 'save_post', array( $this, 'save_post' ) );
 
+		add_filter('manage_posts_columns', array($this,'manage_posts_columns'), 10, 2);
+		add_action('manage_posts_custom_column', array($this,'manage_posts_custom_column'), 10, 2);
+
 		add_action( 'wp_dashboard_setup', array($this,'wp_dashboard_setup' ));
 
 		$this->options = get_option( 'wp_theatre' );
@@ -441,9 +444,9 @@ class WPT_Admin {
     
     function wp_dashboard_setup() {
 		wp_add_dashboard_widget(
-                 'dashboard_wp_theatre',         // Widget slug.
-                 __('Theatre','wp_theatre'),         // Title.
-                 array($this,'wp_add_dashboard_widget') // Display function.
+             'dashboard_wp_theatre',         // Widget slug.
+             __('Theatre','wp_theatre'),         // Title.
+             array($this,'wp_add_dashboard_widget') // Display function.
         );		    
     }
     
@@ -458,6 +461,11 @@ class WPT_Admin {
 		foreach ($wp_theatre->get_events() as $event) {
 			$html.= '<li>';
 			$html.= $this->render_event($event);
+			
+			$html.= '<div class="row-actions">';
+			$html.= '<span><a href="'.get_edit_post_link($event->ID).'">'.__('Edit').'</a></span>';;
+			$html.= '<span> | <a href="'.get_delete_post_link($event->ID).'">'.__('Trash').'</a></span>';;
+			$html.= '</div>'; //.row-actions
 
 			$html.= '</li>';
 		}
@@ -472,6 +480,13 @@ class WPT_Admin {
 		foreach ($wp_theatre->get_productions() as $production) {
 			$html.= '<li>';
 			$html.= $this->render_production($production);
+
+			$html.= '<div class="row-actions">';
+			$html.= '<span><a href="'.get_edit_post_link($production->ID).'">'.__('Edit').'</a></span>';;
+			$html.= '<span> | <a href="'.get_delete_post_link($production->ID).'">'.__('Trash').'</a></span>';;
+			$html.= '<span> | <a href="'.get_permalink($production->ID).'">'.__('View').'</a></span>';;
+			$html.= '</div>'; //.row-actions
+
 			$html.= '</li>';
 		}
 		$html.= '</ul>';
@@ -566,6 +581,36 @@ class WPT_Admin {
 		return $html;	
 	}
 
+	function manage_posts_columns($columns, $post_type) {
+		switch($post_type) {
+			case WPT_Production::post_type_name:
+				$new_columns = array();
+				foreach($columns as $key => $value) {
+					$new_columns[$key] = $value;
+					if ($key == 'title') {
+						$new_columns['dates'] = __('Dates','wp_theatre');
+						$new_columns['cities'] = __('Cities','wp_theatre');
+					}
+				}
+				return $new_columns;
+		}
+
+		return $columns;		
+	}
+	
+	function manage_posts_custom_column($column_name, $post_id) {
+		switch($column_name) {
+			case 'dates':
+				$production = new WPT_Production($post_id);
+				echo $production->dates();
+				break;
+			case 'cities':
+				$production = new WPT_Production($post_id);
+				echo $production->cities();
+				break;
+		}
+		
+	}
 }
 
 if (is_admin()) {

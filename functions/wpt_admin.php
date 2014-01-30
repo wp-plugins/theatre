@@ -8,12 +8,17 @@ class WPT_Admin {
 		add_action( 'delete_post',array( $this, 'delete_post' ));
 		add_action( 'save_post', array( $this, 'save_post' ) );
 
-		add_filter('manage_posts_columns', array($this,'manage_posts_columns'), 10, 2);
-		add_action('manage_posts_custom_column', array($this,'manage_posts_custom_column'), 10, 2);
+		add_filter('manage_wp_theatre_prod_posts_columns', array($this,'manage_wp_theatre_prod_posts_columns'), 10, 2);
+		add_filter('manage_wp_theatre_event_posts_columns', array($this,'manage_wp_theatre_event_posts_columns'), 10, 2);
+		add_action('manage_wp_theatre_prod_posts_custom_column', array($this,'manage_wp_theatre_prod_posts_custom_column'), 10, 2);
+		add_action('manage_wp_theatre_event_posts_custom_column', array($this,'manage_wp_theatre_event_posts_custom_column'), 10, 2);
 
 		add_action( 'wp_dashboard_setup', array($this,'wp_dashboard_setup' ));
 
 		$this->options = get_option( 'wp_theatre' );
+		
+		$this->tabs = array('wp_theatre'=>__('General'));
+		$this->tab = isset( $_GET['tab'] ) ? $_GET['tab'] : 'wp_theatre';
 	}	
 
 	function admin_init() {
@@ -23,29 +28,31 @@ class WPT_Admin {
 		wp_enqueue_style('jquery-style', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.2/themes/smoothness/jquery-ui.css');
 
         register_setting(
-            'wp_theatre_group', // Option group
+            'wp_theatre', // Option group
             'wp_theatre' // Option name
         );
+		if ($this->tab=='wp_theatre') {
 
-        add_settings_section(
-            'display_section_id', // ID
-            __('Display','wp_theatre'), // Title
-            '', // Callback
-            'theatre-admin' // Page
-        );  
-
-        add_settings_field(
-            'settings_field_show_events', // ID
-            __('Show events on production page.','wp_theatre'), // Title 
-            array( $this, 'settings_field_show_events' ), // Callback
-            'theatre-admin', // Page
-            'display_section_id' // Section           
-        );      
+	        add_settings_section(
+	            'display_section_id', // ID
+	            __('Display','wp_theatre'), // Title
+	            '', // Callback
+	            'wp_theatre' // Page
+	        );  
+	
+	        add_settings_field(
+	            'settings_field_show_events', // ID
+	            __('Show events on production page.','wp_theatre'), // Title 
+	            array( $this, 'settings_field_show_events' ), // Callback
+	            'wp_theatre', // Page
+	            'display_section_id' // Section           
+	        );
+		}
 	}
 
 	function admin_menu() {
 		add_menu_page( __('Theatre','wp_theatre'), __('Theatre','wp_theatre'), 'edit_posts', 'theatre', array(), 'none', 30);
-		add_submenu_page( 'theatre', 'Theatre '.__('Settings'), __('Settings'), 'manage_options', 'theatre-admin', array( $this, 'admin_page' ));
+		add_submenu_page( 'theatre', 'Theatre '.__('Settings'), __('Settings'), 'manage_options', 'wpt_admin', array( $this, 'admin_page' ));
 	}
 	
 	function add_meta_boxes() {
@@ -423,18 +430,23 @@ class WPT_Admin {
         );
     }
 
-    public function admin_page()
-    {
-        // Set class property
+    public function admin_page() {
         ?>
         <div class="wrap">
             <?php screen_icon(); ?>
-            <h2><?php echo __('Theatre','wp_theatre').' '.__('Settings');?></h2>           
+       		<h2><?php echo __('Theatre','wp_theatre').' '.__('Settings');?></h2>
+            <h2 class="nav-tab-wrapper">
+            <?php foreach ($this->tabs as $key=>$val) { ?>
+            	<a class="nav-tab <?php echo $key==$this->tab?'nav-tab-active':'';?>" href="?page=wpt_admin&tab=<?php echo $key;?>">
+            		<?php echo $val;?>
+            	</a>
+            <?php } ?>
+            </h2>
             <form method="post" action="options.php">
             <?php
                 // This prints out all hidden setting fields
-                settings_fields( 'wp_theatre_group' );   
-                do_settings_sections( 'theatre-admin' );
+                settings_fields( $this->tab );   
+                do_settings_sections( $this->tab );
                 submit_button(); 
             ?>
             </form>
@@ -581,32 +593,50 @@ class WPT_Admin {
 		return $html;	
 	}
 
-	function manage_posts_columns($columns, $post_type) {
-		switch($post_type) {
-			case WPT_Production::post_type_name:
-				$new_columns = array();
-				foreach($columns as $key => $value) {
-					$new_columns[$key] = $value;
-					if ($key == 'title') {
-						$new_columns['dates'] = __('Dates','wp_theatre');
-						$new_columns['cities'] = __('Cities','wp_theatre');
-					}
-				}
-				return $new_columns;
+	function manage_wp_theatre_prod_posts_columns($columns, $post_type) {
+		$new_columns = array();
+		foreach($columns as $key => $value) {
+			$new_columns[$key] = $value;
+			if ($key == 'title') {
+				$new_columns['dates'] = __('Dates','wp_theatre');
+				$new_columns['cities'] = __('Cities','wp_theatre');
+			}
 		}
-
-		return $columns;		
+		return $new_columns;
 	}
 	
-	function manage_posts_custom_column($column_name, $post_id) {
+	function manage_wp_theatre_event_posts_columns($columns, $post_type) {
+		$new_columns = array();
+		foreach($columns as $key => $value) {
+			if (!in_array($key,array('title'))) {
+				$new_columns[$key] = $value;				
+			}
+			$new_columns['event'] = __('Event','wp_theatre');
+		}
+		return $new_columns;		
+	}
+	
+	function manage_wp_theatre_prod_posts_custom_column($column_name, $post_id) {
+		$production = new WPT_Production($post_id);
 		switch($column_name) {
 			case 'dates':
-				$production = new WPT_Production($post_id);
 				echo $production->dates();
 				break;
 			case 'cities':
-				$production = new WPT_Production($post_id);
 				echo $production->cities();
+				break;
+		}
+		
+	}
+	
+	function manage_wp_theatre_event_posts_custom_column($column_name, $post_id) {
+		$event = new WPT_Event($post_id);
+		switch($column_name) {
+			case 'event':
+				echo $this->render_event($event);
+				break;
+			case 'production':
+				echo $this->render_production($event->production());
 				break;
 		}
 		
@@ -614,7 +644,7 @@ class WPT_Admin {
 }
 
 if (is_admin()) {
-	new WPT_Admin();
+	$wpt_admin = new WPT_Admin();
 }
 
 ?>

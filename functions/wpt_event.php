@@ -84,22 +84,29 @@ class WPT_Event extends WP_Theatre {
 		
 		$html.= '<div class='.self::post_type_name.' itemscope itemtype="http://data-vocabulary.org/Event">';
 
-		$thumbnail = get_the_post_thumbnail($this->production()->ID,'thumbnail');
+		$attr = array(
+			'itemprop'=>'image'
+		);
+		$thumbnail = get_the_post_thumbnail($this->production()->ID,'thumbnail',$attr);
 		if (!empty($thumbnail)) {
 			$html.= '<figure>';
 			$html.= $thumbnail;
 			$html.= '</figure>';
 		}
 
-		$html.= '<div class="date" itemprop="startDate" datetime="'.date('c',$this->datetime()).'">';
+		$html.= '<div class="main">';
+
+		$html.= '<div class="date">';
+		$html.= '<time itemprop="startDate" datetime="'.date('c',$this->datetime()).'">';
 		$html.= $this->date().' '.$this->time(); 
+		$html.= '</time>';
 		$html.= '</div>';
 
 		$html.= '<div class="content">';
 		
 		$html.= '<div class="title">';
 		$html.= '<a itemprop="url" href="'.get_permalink($this->production()->ID).'">';
-		$html.= $this->production()->post()->post_title;
+		$html.= '<span itemprop="summary">'.$this->production()->post()->post_title.'</span>';
 		$html.= '</a>';
 		$html.= '</div>'; //.title
 
@@ -142,7 +149,7 @@ class WPT_Event extends WP_Theatre {
 				}
 				$html_tickets_button.= $text;
 				$html_tickets_button.= '</a>';
-				$html.= apply_filters('wpt_event_tickets_button',$html_tickets_button,$url,$text);
+				$html.= apply_filters('wpt_event_tickets_button',$html_tickets_button,$this);
 			}
 		}
 
@@ -151,6 +158,8 @@ class WPT_Event extends WP_Theatre {
 		}
 		
 		$html.= '</div>'; // .tickets
+
+		$html.= '</div>'; // .main
 
 		$html.= '</div>';
 		return $html;

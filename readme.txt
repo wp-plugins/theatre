@@ -90,6 +90,12 @@ You can also add header above the listing:
 
  
 == Changelog ==
+= 0.3.3 =
+* Microdata for events
+* Speed improvements
+
+= 0.3.2 =
+* new widget: upcoming productions
 
 = 0.3.1 =
 * bugfixes and technical improvements

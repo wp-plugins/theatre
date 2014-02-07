@@ -4,7 +4,7 @@ Plugin Name: Theatre
 Plugin URI: http://wordpress.org/plugins/theatre/
 Description: Turn your Wordpress website into a theatre website.
 Author: Jeroen Schmit, Slim & Dapper
-Version: 0.3.4.1
+Version: 0.3.5
 Author URI: http://slimndap.com/
 Text Domain: wp_theatre
 Domain Path: /lang
@@ -18,6 +18,7 @@ require_once(__DIR__ . '/functions/wpt_event.php');
 require_once(__DIR__ . '/functions/wpt_setup.php');
 require_once(__DIR__ . '/functions/wpt_admin.php');
 require_once(__DIR__ . '/functions/wpt_widget.php');
+require_once(__DIR__ . '/functions/wpt_cart.php');
 
 $wp_theatre = new WP_Theatre();
 	
@@ -34,6 +35,7 @@ class WP_Theatre {
 			$ID = $ID->ID;
 		}
 		$this->ID = $ID;
+		$this->options = get_option( 'wp_theatre' );
 	}
 	
 	function get_post() {
@@ -80,15 +82,16 @@ class WP_Theatre {
 			JOIN $wpdb->postmeta AS wp_theatre_prod ON events.ID = wp_theatre_prod.post_ID
 			JOIN $wpdb->posts AS productions ON wp_theatre_prod.meta_value = productions.ID
 			JOIN $wpdb->postmeta AS sticky ON productions.ID = sticky.post_ID
-			WHERE events.post_type = 'wp_theatre_event'
-			AND events.post_status = 'publish'
-			AND event_date.meta_key = 'event_date'
-			AND wp_theatre_prod.meta_key = 'wp_theatre_prod'
-			AND sticky.meta_key = 'sticky'
-			AND (
-			event_date.meta_value > NOW( )
+			WHERE 
+			(
+				events.post_type = 'wp_theatre_event'
+				AND events.post_status = 'publish'
+				AND event_date.meta_key = 'event_date'
+				AND wp_theatre_prod.meta_key = 'wp_theatre_prod'
+				AND sticky.meta_key = 'sticky'
+				AND event_date.meta_value > NOW( )
+			) 
 			OR sticky.meta_value = 'on'
-			)
 			GROUP BY productions.ID
 			ORDER BY sticky.meta_value DESC , event_date.meta_value ASC				
 		";

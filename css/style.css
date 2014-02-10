@@ -9,6 +9,11 @@
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
+  margin: 0;
+}
+.wp_theatre_prod figure img {
+  max-width: 100%;
+  height: auto;
 }
 .wp_theatre_prod .wp_theatre_prod_main {
   float: left;
@@ -67,6 +72,18 @@
 .wp_theatre_event .wp_theatre_event_main > div.wp_theatre_event_tickets .wp_theatre_event_prices {
   font-size: 0.875em;
 }
+@media (max-width: 768px) {
+  .wp_theatre_event figure {
+    width: 30%;
+  }
+  .wp_theatre_event .wp_theatre_event_main {
+    width: 70%;
+  }
+  .wp_theatre_event .wp_theatre_event_main > div {
+    float: none;
+    width: auto !important;
+  }
+}
 .wp_theatre_events nav {
   border-bottom: 1px solid lightgrey;
   padding-bottom: 0.5em;
@@ -123,6 +140,7 @@
 }
 .widget_wpt_cart_widget .wpt_cart_item {
   overflow: auto;
+  margin-bottom: 1em;
 }
 .widget_wpt_cart_widget .wpt_cart_item .wpt_cart_item_amount {
   float: left;

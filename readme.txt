@@ -30,21 +30,6 @@ ___What is included___
 * Short codes for listings of productions and events.
 * Widgets for listings of productions and events.
 
-___What is not included___
-
-A lot! But most really cool things can easily be achieved by combining the Theatre plugin with other popular plugins:
-
-* Caching - use [W3 Total Cache](http://wordpress.org/plugins/w3-total-cache/)
-* Fancy admin screens with extra fields - use [Pods Framework](http://pods.io/) and [Tabify Edit Screen](http://wordpress.org/plugins/tabify-edit-screen/)
-* Simple templating - use [Timber](http://jarednova.github.io/timber/)
-
-__What's next?__
-
-* [Documentation](https://github.com/slimndap/wp-theatre/wiki)
-* More shortcodes
-* More Widgets
-* Settings
-
 __Contributors Welcome__
 
 * Submit a [pull request on Github](https://github.com/slimndap/wp-theatre)
@@ -55,40 +40,72 @@ __Author__
 
 == Installation ==
 
-This section describes how to install the plugin and get it working.
+1. Look for 'theatre' in the Wordpress plugin directory.
+1. Install the Theatre plugin (by Jeroen Schmit, Slim & Dapper).
+1. Activate the plugin.
 
-1. Install the plugin.
-1. Start adding your productions and events using the Theatre-menu or the Theatre dashboard widget.
+Your Wordpress admin screen now has a new menu-item in the left column: Theatre.
 
-__Productions and events__
+= Managing your events =
 
-Theatre uses _productions_ to group your _events_. 
+Let's add a single event.
 
-Each production has it's own page and can have one or more events. 
+Make sure that the _Show events on production page._-option is checked on the _Theatre/Settings_ page.
 
-Events don't have their own pages. They only appear on pages with event listings.
+First create a production:
 
-So if you run a theatre then 'The Sound Of Music' is a _production_ and the show this weekend is an _event_.
+1. Click on _Theatre/Productions_.
+1. Click on _Add new_.
+1. Give your production a title, some content and a featured image.
+1. Click on _Publish_.
+1. Click on _View post_
 
-If you're a musician then your band is a _production_ and your gigs are the _events_.
+You are now looking at your first production. It probably looks exactly like any other post or page.
 
-__Widgets__
+1. Edit the event you just created.
+1. In the right column, click on 'New event'.
+1. Set the event date, venue and city. Make sure the event date is a date in the future. Optionally, add an URL for the tickets. 
+1. Click on _Publish_.
+1. Click on the title of your production.
+1. Click on _View post_
 
-Theater comes with one widget. Place it in your sidebar to show a list of all upcoming events.
+Your should now see your production with the event details at the bottom!
 
-__Shortcodes__
+= Upcoming events =
 
-Theatre comes with one shortcode:
+To add a listing with all upcoming events to your Wordpress website:
 
-	[wp_theatre_events]
- 
-Add it to the content of your post or page to show a list of all upcoming events.
+1. Create a new blank page (eg. 'Upcoming events').
+1. Place `[wp_theatre_events]` in the content.
+1. Publish the page and view it.
+1. Done!
 
-You can also add header above the listing:
+It is also possible to paginate the listing by month by altering the shortcode a bit:
 
-	[wp_theatre_events]Upcoming events[/wp_theatre_events]
+    [wp_theatre_events paged=1]
 
- 
+*Widgets*
+
+Theatre also comes with two widgets to show your upcoming events in the sidebar:
+
+* Theatre Events: a list of upcoming events. 
+* Theatre Productions: a list of productions with upcoming events. 
+
+You can limit the size of the lists in the corresponding widget's settings.
+
+= Production pages =
+
+Production pages look exactly the same as regular post pages. However, you can add a listing of all the events for the current production to the page. 
+
+You have two options:
+
+* Check 'Show events on production page' on the Theatre settings page in the Wordpress admin. The listing is added to the bottom of the content of the production.
+* Add the `[wpt_production_events]` shortcode to the content of the production.
+
+= Theme developers =
+
+Check out the [documentation](https://github.com/slimndap/wp-theatre/wiki). 
+
 == Changelog ==
 
 = 0.3.5 =

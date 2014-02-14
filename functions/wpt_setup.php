@@ -2,11 +2,12 @@
 class WPT_Setup {
 	function __construct() {
 		$this->options = get_option( 'wp_theatre' );
-
-		add_action( 'init', array($this,'init'));
-		
+		// Installation
 		register_activation_hook( __FILE__, array($this, 'activate' ));		
 
+		// Hooks
+		add_action( 'init', array($this,'init'));
+		
 		add_action( 'widgets_init', function(){
 		     register_widget( 'WPT_Events_Widget' );
 		     register_widget( 'WPT_Productions_Widget' );
@@ -14,6 +15,23 @@ class WPT_Setup {
 		});
 		
 		add_action( 'plugins_loaded', array($this,'plugins_loaded'));
+	}
+
+	/**
+	 * action_links function.
+	 *
+	 * @access public
+	 * @param mixed $links
+	 * @return void
+	 */
+	public function plugin_action_links( $links ) {
+
+		$plugin_links = array(
+			'<a href="' . admin_url( 'admin.php?page=wpt_admin' ) . '">' . __( 'Settings') . '</a>',
+			'<a href="https://github.com/slimndap/wp-theatre/wiki">' . __( 'Docs', 'wp_theatre' ) . '</a>',
+		);
+
+		return array_merge( $plugin_links, $links );
 	}
 
 	function init() {
@@ -68,7 +86,6 @@ class WPT_Setup {
 			'show_in_menu'  => 'theatre',
 			)
 		);
-		wp_enqueue_style( 'wp_theatre_css', plugins_url( '../css/style.css', __FILE__ ) );
 	}	
 
 	function plugins_loaded(){
@@ -81,6 +98,33 @@ class WPT_Setup {
 	}
 
 
+}
+
+add_action( 'wp_ajax_save_bulk_edit_'.WPT_Production::post_type_name, 'wp_ajax_save_bulk_edit_production' );
+function wp_ajax_save_bulk_edit_production() {
+	$wpt_admin = new WPT_Admin();
+
+	// TODO perform nonce checking
+	remove_action( 'save_post', array( $this, 'save_post' ) );
+
+	$post_ids = ( ! empty( $_POST[ 'post_ids' ] ) ) ? $_POST[ 'post_ids' ] : array();
+	if ( ! empty( $post_ids ) && is_array( $post_ids ) ) {
+		foreach( $post_ids as $post_id ) {
+			// Update status of connected Events
+			$events = $wpt_admin->get_events($post_id);
+			foreach($events as $event) {
+				$post = array(
+					'ID'=>$event->ID,
+					'post_status'=>$_POST[ 'post_status' ]
+				);
+				wp_update_post($post);
+			}
+		}
+	}
+
+	add_action( 'save_post', array( $this, 'save_post' ) );
+
+	die();					
 }
 
 $WPT_Setup = new WPT_Setup();

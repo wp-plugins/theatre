@@ -4,20 +4,13 @@ Plugin Name: Theatre
 Plugin URI: http://wordpress.org/plugins/theatre/
 Description: Turn your Wordpress website into a theatre website.
 Author: Jeroen Schmit, Slim & Dapper
-Version: 0.3.6
+Version: 0.3.7
 Author URI: http://slimndap.com/
 Text Domain: wp_theatre
 Domain Path: /lang
 */
 
-require_once(__DIR__ . '/functions/wpt_season.php');
-require_once(__DIR__ . '/functions/wpt_production.php');
-require_once(__DIR__ . '/functions/wpt_event.php');
-require_once(__DIR__ . '/functions/wpt_setup.php');
-require_once(__DIR__ . '/functions/wpt_admin.php');
-require_once(__DIR__ . '/functions/wpt_widget.php');
-require_once(__DIR__ . '/functions/wpt_frontend.php');
-require_once(__DIR__ . '/functions/wpt_cart.php');
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 	
 /** Usage:
  *
@@ -33,21 +26,51 @@ require_once(__DIR__ . '/functions/wpt_cart.php');
  */
 
 class WP_Theatre {
-
-	function __construct($ID=false, $PostClass=false) {
+	function __construct() {
 	
-		$this->PostClass = $PostClass;
+		$this->version = '0.3.7';
 
-		if ($ID instanceof WP_Post) {
-			// $ID is a WP_Post object
-			if (!$PostClass) {
-				$this->post = $ID;
-			}
-			$ID = $ID->ID;
+		// Includes
+		$this->includes();
+	
+		// Setup
+		$this->setup = new WPT_Setup();
+		$this->admin = new WPT_Admin();
+		if (is_admin()) {
+		} else {
+			$this->frontend = new WPT_Frontend();
+			$this->cart = new WPT_Cart();
 		}
-		$this->ID = $ID;
 		
-		$this->options = get_option('wp_theatre');
+		// Options
+		$this->options = get_option( 'wp_theatre' );
+		$this->wpt_social_options = get_option( 'wpt_social' );
+
+		// Hooks
+		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this->setup, 'plugin_action_links' ) );
+		
+		// Loaded action
+		do_action( 'wpt_loaded' );
+	}
+	
+	/**
+	 * Include required core files used in admin and on the frontend.
+	 *
+	 * @access public
+	 * @return void
+	 */
+	function includes() {
+		require_once(__DIR__ . '/functions/wpt_production.php');
+		require_once(__DIR__ . '/functions/wpt_event.php');
+		require_once(__DIR__ . '/functions/wpt_setup.php');
+		require_once(__DIR__ . '/functions/wpt_season.php');
+		require_once(__DIR__ . '/functions/wpt_widget.php');
+		require_once(__DIR__ . '/functions/wpt_admin.php');
+		if (is_admin()) {
+		} else {
+			require_once(__DIR__ . '/functions/wpt_frontend.php');
+			require_once(__DIR__ . '/functions/wpt_cart.php');	
+		}
 	}
 	
 	/**
@@ -93,26 +116,7 @@ class WP_Theatre {
 	public function seasons($PostClass = false) {
 		return self::get_seasons($PostClass);
 	}
-	
-	/**
-	 * The custom post as a WP_Post object.
-	 *
-	 * This function is inherited by the WPT_Production, WPT_Event and WPT_Seasons object.
-	 * It can be used to access all properties and methods of the corresponding WP_Post object.
-	 * 
-	 * Example:
-	 *
-	 * $event = new WPT_Event();
-	 * echo WPT_Event->post()->post_title();
-	 *
-	 * @since 0.3.5
-	 *
-	 * @return mixed A WP_Post object.
-	 */
-	public function post() {
-		return $this->get_post();
-	}
-	
+		
 	/**
 	 * A list of upcoming events in HTML.
 	 *
@@ -135,7 +139,7 @@ class WP_Theatre {
 	 * @see WP_Theatre::get_events()
  	 * @return string HTML.
 	 */
-	function render_events($args=array()) {
+	function compile_events($args=array()) {
 		$defaults = array(
 			'paged' => false,
 			'grouped' => false,
@@ -157,7 +161,7 @@ class WP_Theatre {
 		}			
 
 		$html = '';
-		echo '<div class="wp_theatre_events">';
+		$html.= '<div class="wp_theatre_events">';
 
 		if ($paged && count($months)) {
 			if (empty($_GET['month'])) {
@@ -167,20 +171,20 @@ class WP_Theatre {
 				$current_month = $_GET[__('month','wp_theatre')];
 			}
 			
-			echo '<nav>';
+			$html.= '<nav>';
 			foreach($months as $month=>$events) {
 				$url = remove_query_arg(__('month','wp_theatre'));
 				$url = add_query_arg( __('month','wp_theatre'), sanitize_title($month) , $url);
-				echo '<span>';
+				$html.= '<span>';
 				if (sanitize_title($month) != $current_month) {
-					echo '<a href="'.$url.'">'.$month.'</a>';
+					$html.= '<a href="'.$url.'">'.$month.'</a>';
 				} else {
-					echo $month;
+					$html.= $month;
 					
 				}
-				echo '</span>';
+				$html.= '</span>';
 			}
-			echo '</nav>';
+			$html.= '</nav>';
 		}
 
 		foreach($months as $month=>$events) {
@@ -190,18 +194,22 @@ class WP_Theatre {
 				}
 			}
 			if ($grouped) {
-				echo '<h4>'.$month.'</h4>';				
+				$html.= '<h4>'.$month.'</h4>';				
 			}
-			echo '<ul>';
 			foreach ($events as $event) {
-				echo '<li>';
-				$event->render();			
-				echo '</li>';
+				$html.=$event->compile();			
 			}
-			echo '</ul>';			
 		}
 	
-		echo '</div>'; //.wp-theatre_events
+		$html.= '</div>'; //.wp-theatre_events
+		
+		return $html;
+	}
+	
+	function render_events($args=array()) {
+		do_action('wpt_events_before',$this);
+		echo self::compile_events($args);
+		do_action('wpt_events_after',$this);
 	}
 
 	function render_productions($args=array()) {
@@ -219,13 +227,9 @@ class WP_Theatre {
 
 		$html.= '<div class="wp_theatre_productions">';
 
-		$html.= '<ul>';
 		foreach ($productions as $production) {
-			$html.= '<li>';
 			$html.= $production->render();			
-			$html.= '</li>';
 		}
-		$html.= '</ul>';			
 	
 		$html.= '</div>'; //.wp-theatre_productions
 		return $html;
@@ -235,17 +239,6 @@ class WP_Theatre {
 	 * Private functions.
 	 */
 	 
-	private function get_post() {
-		if (!isset($this->post)) {
-			if ($this->PostClass) {
-				$this->post = new $this->PostClass($this->ID);				
-			} else {
-				$this->post = get_post($this->ID);
-			}
-		}
-		return $this->post;
-	}
-	
 	private function get_productions($PostClass = false) {
 		
 		global $wpdb;
@@ -260,10 +253,10 @@ class WP_Theatre {
 			JOIN $wpdb->postmeta AS sticky ON productions.ID = sticky.post_ID
 			WHERE 
 			(
-				events.post_type = 'wp_theatre_event'
+				events.post_type = '".WPT_Event::post_type_name."'
 				AND events.post_status = 'publish'
 				AND event_date.meta_key = 'event_date'
-				AND wp_theatre_prod.meta_key = 'wp_theatre_prod'
+				AND wp_theatre_prod.meta_key = '".WPT_Production::post_type_name."'
 				AND sticky.meta_key = 'sticky'
 				AND event_date.meta_value > NOW( )
 			) 
@@ -281,33 +274,28 @@ class WP_Theatre {
 	}
 	
 	private function get_events($PostClass = false) {
-		$args = array(
-			'post_type'=>WPT_Event::post_type_name,
-			'posts_per_page' => -1,
-			'meta_key'=>'event_date',
-			'orderby' => 'meta_value_num',
-			'order' => 'ASC',
-			'meta_query' => array( // WordPress has all the results, now, return only the events after today's date
-				array(
-					'key' => 'event_date', // Check the start date field
-					'value' => date("Y-m-d"), // Set today's date (note the similar format)
-					'compare' => '>=', // Return the ones greater than today's date
-				),
-				array(
-					'key' => WPT_Production::post_type_name, // Check if events is attached to production
-					'compare' => 'EXISTS'
-				)
-			),
-		);
-		$posts = get_posts($args);
+		global $wpdb;
+		$querystr = "
+			SELECT events.ID
+			FROM $wpdb->posts AS
+			events
+			
+			join $wpdb->postmeta AS productions on events.ID = productions.post_ID
+			join $wpdb->postmeta AS event_date on events.ID = event_date.post_ID
+			
+			WHERE 
+			events.post_type = '".WPT_Event::post_type_name."'
+			and events.post_status='publish'
+			and productions.meta_key = '".WPT_Production::post_type_name."'
+			and event_date.meta_key = 'event_date'
+			AND event_date.meta_value > NOW( )
+		";
+		$posts = $wpdb->get_results($querystr, OBJECT);
 
 		$events = array();
 		for ($i=0;$i<count($posts);$i++) {
-			$datetime = strtotime(get_post_meta($posts[$i]->ID,'event_date',true));
-			$events[$datetime.$posts[$i]->ID] = new WPT_Event($posts[$i], $PostClass);
+			$events[] = new WPT_Event($posts[$i]->ID, $PostClass);
 		}
-		
-		ksort($events);
 		return array_values($events);
 	}
 
@@ -329,5 +317,11 @@ class WP_Theatre {
 		
 	}
 }
+
+/**
+ * Init WP_Theatre class
+ */
+$wp_theatre = new WP_Theatre();
+
 
 ?>

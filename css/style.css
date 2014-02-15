@@ -93,6 +93,9 @@
     width: auto !important;
   }
 }
+.wp_theatre_events {
+  margin-bottom: 1em;
+}
 .wp_theatre_events nav span {
   padding-right: 0.5em;
   font-size: 0.875em;

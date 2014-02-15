@@ -10,6 +10,7 @@ class WPT_Frontend {
 		add_shortcode('wp_theatre_events', array($this,'wp_theatre_events'));
 		add_shortcode('wp_theatre_iframe', array($this,'wp_theatre_iframe'));
 		add_shortcode('wpt_production_events', array($this,'wpt_production_events'));
+		add_shortcode('wpt_event_ticket_button', array($this,'wpt_event_ticket_button'));
 
 		$this->options = get_option( 'wp_theatre' );
 	}
@@ -70,11 +71,24 @@ class WPT_Frontend {
 	}
 
 	function the_content($content) {
+		global $wp_theatre;
+		
 		if (is_singular(WPT_Production::post_type_name)) {
-			if (isset( $this->options['show_events'] ) && (esc_attr( $this->options['show_events'])=='yes')) {
+			if (
+				isset( $wp_theatre->options['show_events'] ) &&
+				in_array($wp_theatre->options['show_events'], array('above','below'))
+			) {
 				$production = new WPT_Production();			
-				$content .= '<h3>'.WPT_Event::post_type()->labels->name.'</h3>';
-				$content .= $production->compile_events();
+				$events_html = '<h3>'.WPT_Event::post_type()->labels->name.'</h3>';
+				$events_html.= '[wpt_production_events]';
+				
+				switch ($wp_theatre->options['show_events']) {
+					case 'above' :
+						$content = $events_html.$content;
+						break;
+					case 'below' :
+						$content.= $events_html;
+				}
 			}
 		}
 		return $content;
@@ -87,7 +101,7 @@ class WPT_Frontend {
 		), $atts );
 		extract($atts);
 				
-		return WP_Theatre::render_events($atts);
+		return WP_Theatre::compile_events($atts);
 	}
 
 	function wp_theatre_iframe($atts, $content=null) {
@@ -107,6 +121,19 @@ class WPT_Frontend {
 			$production = new WPT_Production();			
 			return $production->compile_events();
 		}
+	}
+	
+	function wpt_event_ticket_button($atts, $content=null) {
+		$atts = shortcode_atts( array(
+			'id' => false
+		), $atts );
+		extract($atts);
+		
+		if ($id) {
+			$event = new WPT_Event($id);
+			return $event->tickets_button();
+		}
+		return 'kkk';
 	}
 }
 

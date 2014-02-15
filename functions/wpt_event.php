@@ -229,16 +229,15 @@
 				if ($url!='') {
 					$html_tickets_button = '';
 					
-					$ticket_button_tag = 'a';
-					if (!empty($wp_theatre->options['ticket_button_tag'])) {
-						$ticket_button_tag = $wp_theatre->options['ticket_button_tag'];
-					}
-					$html_tickets_button.= '<'.$ticket_button_tag.' href="'.$url.'" rel="nofollow"';
+					$html_tickets_button.= '<a href="'.$url.'" rel="nofollow"';
 					
 					// Add classes to tickets button
 					$html_tickets_button_classes = array();
+					if (!empty($wp_theatre->options['ticket_button_tag']) && $wp_theatre->options['ticket_button_tag']=='button') {
+						$html_tickets_button_classes[] = 'button';
+					}
 					if (!empty($wp_theatre->options['integrationtype'])) {
-						$html_tickets_button_classes[] = 'wpt_tickets_url wp_theatre_integrationtype_'.$wp_theatre->options['integrationtype'].'"';
+						$html_tickets_button_classes[] = 'wpt_tickets_url wp_theatre_integrationtype_'.$wp_theatre->options['integrationtype'];
 					}
 					$html_tickets_button_classes = apply_filters('wpt_event_tickets_button_classes',$html_tickets_button_classes,$this);
 					$html_tickets_button.= ' class="'.implode(' ' ,$html_tickets_button_classes).'"';
@@ -250,7 +249,7 @@
 						$text = __('Tickets','wp_theatre');			
 					}
 					$html_tickets_button.= $text;
-					$html_tickets_button.= '</'.$ticket_button_tag.'>';
+					$html_tickets_button.= '</a>';
 					
 					$html.= apply_filters('wpt_event_tickets_button',$html_tickets_button, $this);
 				}

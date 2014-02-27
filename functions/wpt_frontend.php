@@ -7,12 +7,16 @@ class WPT_Frontend {
 		add_filter('pre_get_posts', array($this,'pre_get_posts') );
 		add_action('the_content', array($this, 'the_content'));
 
-		add_shortcode('wp_theatre_events', array($this,'wp_theatre_events'));
+		add_shortcode('wpt_events', array($this,'wpt_events'));
+		add_shortcode('wpt_productions', array($this,'wpt_productions'));
 		add_shortcode('wp_theatre_iframe', array($this,'wp_theatre_iframe'));
 		add_shortcode('wpt_production_events', array($this,'wpt_production_events'));
 		add_shortcode('wpt_event_ticket_button', array($this,'wpt_event_ticket_button'));
 
 		$this->options = get_option( 'wp_theatre' );
+		
+		// Deprecated
+		add_shortcode('wp_theatre_events', array($this,'wpt_events'));
 	}
 	
 	function init() {
@@ -27,7 +31,7 @@ class WPT_Frontend {
 		}
 
 		// Add Thickbox files
-		if ($wp_theatre->options['integrationtype']=='lightbox') {
+		if (!empty($wp_theatre->options['integrationtype']) && $wp_theatre->options['integrationtype']=='lightbox') {
 			wp_enqueue_script('thickbox');
 			wp_enqueue_style('thickbox', includes_url('/js/thickbox/thickbox.css'), null, $wp_theatre->version);			
 		}
@@ -94,14 +98,65 @@ class WPT_Frontend {
 		return $content;
 	}
 
-	function wp_theatre_events($atts, $content=null) {
+	function wpt_events($atts, $content=null) {
+		global $wp_theatre;
+		
 		$atts = shortcode_atts( array(
-			'paged' => 0,
-			'grouped' => 0,
+			'paged' => false,
+			'grouped' => false,
+			'thumbnail' => true,
+			'fields' => null,
+			'hide' => null
 		), $atts );
-		extract($atts);
 				
-		return WP_Theatre::compile_events($atts);
+		$hide = explode(',',$atts['hide']);
+		for ($i=0;$i<count($hide);$i++) {
+			$hide[$i] = trim($hide[$i]);
+		}
+		$atts['hide'] = $hide;
+		
+		if (!empty($atts['fields'])) {
+			$fields = explode(',',$atts['fields']);
+			for ($i=0;$i<count($fields);$i++) {
+				$fields[$i] = trim($fields[$i]);
+			}
+			$atts['fields'] = $fields;
+		}
+		
+		if (!empty($atts['thumbnail'])) {
+			$atts['thumbnail'] = $atts['thumbnail'] == 1;
+		}
+		
+		return $wp_theatre->events->html_listing($atts);
+	}
+
+	function wpt_productions($atts, $content=null) {
+		global $wp_theatre;
+		
+		$atts = shortcode_atts( array(
+			'paged' => false,
+			'grouped' => false,
+			'fields' => null,
+			'hide' => null,
+			'upcoming' => false,
+			'thumbnail' => true
+		), $atts );
+				
+		if (!empty($atts['fields'])) {
+			$fields = explode(',',$atts['fields']);
+			for ($i=0;$i<count($fields);$i++) {
+				$fields[$i] = trim($fields[$i]);
+			}
+			$atts['fields'] = $fields;
+		}
+		
+		$hide = explode(',',$atts['hide']);
+		for ($i=0;$i<count($hide);$i++) {
+			$hide[$i] = trim($hide[$i]);
+		}
+		$atts['hide'] = $hide;
+		
+		return $wp_theatre->productions->html_listing($atts);
 	}
 
 	function wp_theatre_iframe($atts, $content=null) {
@@ -117,9 +172,28 @@ class WPT_Frontend {
 	}
 	
 	function wpt_production_events($atts, $content=null) {
+		global $wp_theatre;
+
+		$atts = shortcode_atts( array(
+			'fields' => null,
+			'hide' => 'title'
+		), $atts );
+				
+		$hide = explode(',',$atts['hide']);
+		for ($i=0;$i<count($hide);$i++) {
+			$hide[$i] = trim($hide[$i]);
+		}
+		$atts['hide'] = $hide;
+
 		if (is_singular(WPT_Production::post_type_name)) {
-			$production = new WPT_Production();			
-			return $production->compile_events();
+			$args = array(
+				WPT_Production::post_type_name => get_the_ID(),
+				'thumbnail' => false,
+				'hide' => array('title'),
+				'fields' => $atts['fields'],
+				'hide' => $atts['hide']
+			);
+			return $wp_theatre->events->html_listing($args);
 		}
 	}
 	
@@ -131,9 +205,11 @@ class WPT_Frontend {
 		
 		if ($id) {
 			$event = new WPT_Event($id);
-			return $event->tickets_button();
+			$args = array(
+				'html'=>true
+			);
+			return $event->tickets($args);
 		}
-		return 'kkk';
 	}
 }
 

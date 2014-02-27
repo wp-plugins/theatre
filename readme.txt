@@ -7,7 +7,7 @@ Stable tag: trunk
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Add event listings to your Wordpress website. Build a website for your theater, music venue, museum, conference center or your rockband!
+Add events to your Wordpress website. Build a website for your theater, music venue, museum, conference center, sportsteam or your rockband!
 
 == Description ==
 This plugin gives you the ability to manage seasons, productions and events in Wordpress and comes with all necessary shortcodes and widgets to show your events on your website.
@@ -67,6 +67,10 @@ __All event listings look really weird!__
 Make sure that you checked the 'Enable built-in Theatre stylesheet'-option in the Theatre plugin settings.
 
 == Changelog ==
+
+= 0.4 =
+* New wpt_productions shortcode.
+* Customize which fields to show in event and production listings. See [documentation](https://github.com/slimndap/wp-theatre/wiki/Shortcodes).
 
 = 0.3.8 =
 * Show event listings above or below content on production page.

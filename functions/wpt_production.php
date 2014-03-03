@@ -124,7 +124,6 @@ class WPT_Production {
 		);
 
 		$args = wp_parse_args( $args, $defaults );
-				
 		if (!isset($this->dates)) {			
 			$dates = '';
 			$dates_short = '';
@@ -133,7 +132,6 @@ class WPT_Production {
 			$upcoming = $this->upcoming();
 			$events = $this->events();
 			if (is_array($upcoming) && (count($upcoming)>0)) {
-
 				$first = $events[0];
 				$next = $upcoming[0];
 				$last = $events[count($events)-1];
@@ -166,10 +164,10 @@ class WPT_Production {
 	function events() {
 		global $wp_theatre;
 		if (!isset($this->events)) {
-			$args = array(
-				WPT_Production::post_type_name => $this->ID
-			);
-			$this->events = $wp_theatre->events->all($args);
+			$filters = array(
+				'production'=>$this->ID,
+			);			
+			$this->events = $wp_theatre->events($filters);
 		}
 		return $this->events;
 	}
@@ -215,10 +213,11 @@ class WPT_Production {
 	function past() {
 		global $wp_theatre;
 		if (!isset($this->past)) {
-			$args = array(
-				WPT_Production::post_type_name => $this->ID
+			$filters = array(
+				'production' => $this->ID,
+				'past' => true
 			);
-			$this->past = $wp_theatre->events->past($args);
+			$this->past = $wp_theatre->events($filters);
 		}
 		return $this->past;
 	}
@@ -250,7 +249,7 @@ class WPT_Production {
 
 		if ($args['html']) {
 			$html = '';
-			$html.= '<a itemprop="url" href="'.get_permalink($this->ID).'">';
+			$html.= '<a href="'.get_permalink($this->ID).'">';
 			$html.= $args['text'];
 			$html.= '</a>';
 			return apply_filters('wpt_event_permalink_html', $html, $this);				
@@ -329,14 +328,12 @@ class WPT_Production {
 	 *
 	 * @param array $args {
 	 *     @type bool $html Return HTML? Default <false>.
-	 *     @type bool $meta Return as invisible meta tag? Default <false>.
 	 * }
 	 * @return integer ID or string HTML.
 	 */
 	function thumbnail($args=array()) {
 		$defaults = array(
 			'html' => false,
-			'meta' => false
 		);
 		$args = wp_parse_args( $args, $defaults );
 		
@@ -346,23 +343,13 @@ class WPT_Production {
 	
 		if ($args['html']) {
 			$html = '';
-			if ($args['meta']) {
-				$thumbnail = wp_get_attachment_url($this->thumbnail);
-				if (!empty($thumbnail)) {
-					$html_thumbnail.= '<meta itemprop="image" content="'.$thumbnail.'" />';
-				}
-			} else {
-				$attr = array(
-					'itemprop'=>'image'
-				);
-				$thumbnail = get_the_post_thumbnail($this->ID,'thumbnail',$attr);					
-				if (!empty($thumbnail)) {
-					$html.= '<figure>';
-					$permalink_args = $args;
-					$permalink_args['text'] = $thumbnail;
-					$html.= $this->permalink($permalink_args);
-					$html.= '</figure>';
-				}
+			$thumbnail = get_the_post_thumbnail($this->ID,'thumbnail');					
+			if (!empty($thumbnail)) {
+				$html.= '<figure>';
+				$permalink_args = $args;
+				$permalink_args['text'] = $thumbnail;
+				$html.= $this->permalink($permalink_args);
+				$html.= '</figure>';
 			}
 			return apply_filters('wpt_production_thumbnail_html', $html, $this);
 		} else {
@@ -371,22 +358,20 @@ class WPT_Production {
 	}
 
 	/**
-	 * Event title.
+	 * Production title.
 	 * 
-	 * Returns the event title as plain text or as an HTML element.
+	 * Returns the production title as plain text or as an HTML element.
 	 *
 	 * @since 0.4
 	 *
 	 * @param array $args {
 	 *     @type bool $html Return HTML? Default <false>.
-	 *     @type bool $meta Return as invisible meta tag? Default <false>.
 	 * }
 	 * @return string text or HTML.
 	 */
 	function title($args=array()) {
 		$defaults = array(
-			'html' => false,
-			'meta' => false
+			'html' => false
 		);
 		$args = wp_parse_args( $args, $defaults );
 
@@ -395,16 +380,11 @@ class WPT_Production {
 		}	
 		if ($args['html']) {
 			$html = '';
-			if ($args['meta']) {
-				$html.= '<meta itemprop="summary" content="'.$this->title.'" />';
-				$html.= '<meta itemprop="url" content="'.$this->permalink().'" />';					
-			} else {
-				$html.= '<div class="'.self::post_type_name.'_title">';
-				$permalink_args = $args;
-				$permalink_args['text'] = '<span itemprop="summary">'.$this->title.'</span>';
-				$html.= $this->permalink($permalink_args);
-				$html.= '</div>'; //.title								
-			}
+			$html.= '<div class="'.self::post_type_name.'_title">';
+			$permalink_args = $args;
+			$permalink_args['text'] = $this->title;
+			$html.= $this->permalink($permalink_args);
+			$html.= '</div>'; //.title								
 			return apply_filters('wpt_event_title_html', $html, $this);
 		} else {
 			return $this->title;			
@@ -414,10 +394,11 @@ class WPT_Production {
 	function upcoming() {
 		global $wp_theatre;
 		if (!isset($this->upcoming)) {
-			$args = array(
-				WPT_Production::post_type_name => $this->ID
+			$filters = array(
+				'production' => $this->ID,
+				'upcoming' => true
 			);
-			$this->upcoming = $wp_theatre->events->upcoming($args);
+			$this->upcoming = $wp_theatre->events($filters);
 		}
 		return $this->upcoming;
 	}
@@ -492,10 +473,12 @@ class WPT_Production {
 		$html.= '</div>'; // .main
 
 		// Microdata for events
-		$args = array(
-			WPT_Production::post_type_name => $this->ID
-		);
-		$html.= $wp_theatre->events->meta_listing($args);
+		if (!is_singular(WPT_Production::post_type_name)) {		
+			$filters = array(
+				'production' => $this->ID
+			);
+			$html.= $wp_theatre->events->meta($filters);
+		}
 
 		// Wrapper
 		$html = '<div class="'.implode(' ',$classes).'">'.$html.'</div>';

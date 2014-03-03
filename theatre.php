@@ -4,7 +4,7 @@ Plugin Name: Theatre
 Plugin URI: http://wordpress.org/plugins/theatre/
 Description: Turn your Wordpress website into a theatre website.
 Author: Jeroen Schmit, Slim & Dapper
-Version: 0.4
+Version: 0.5
 Author URI: http://slimndap.com/
 Text Domain: wp_theatre
 Domain Path: /lang
@@ -56,12 +56,28 @@ class WP_Theatre {
 	}
 	
 	/**
+	 * Enable magic __invoke function in child classes.
+	 * See: http://stackoverflow.com/a/3108130/1153764
+	 *
+	 * Example:
+	 * $events = $wp_theatre->events();
+	 *
+	 */
+	public function __call($method, $args) {
+		if(property_exists($this, $method)) {
+		    $prop = $this->$method;
+		    return call_user_func_array($this->$method,$args);
+		}
+	}
+	
+	/**
 	 * Include required core files used in admin and on the frontend.
 	 *
 	 * @access public
 	 * @return void
 	 */
 	function includes() {
+		require_once(__DIR__ . '/functions/wpt_listing.php');
 		require_once(__DIR__ . '/functions/wpt_production.php');
 		require_once(__DIR__ . '/functions/wpt_productions.php');
 		require_once(__DIR__ . '/functions/wpt_event.php');
@@ -109,15 +125,11 @@ class WP_Theatre {
 	 */
 
 	function compile_events($args=array()) {
-		return $this->events->html_listing($args);
+		return $this->events->html($args);
 	}
 	
- 	public function events($args = array(), $PostClass = false) {
- 		return $this->events->upcoming(null, $PostClass);
-	}
-
 	private function get_events($PostClass = false) {
-		return $this->events(null, $PosctClass);
+		return $this->events();
 	}
 
 	function render_events($args=array()) {
@@ -125,11 +137,7 @@ class WP_Theatre {
 	}
 
 	private function get_productions($PostClass = false) {
-		return $this->productions->upcoming();
-	}
-
-	public function productions($PostClass = false) {
-		return $this->productions->upcoming(null, $PostClass);
+		return $this->productions();
 	}
 
 	function render_productions($args=array()) {

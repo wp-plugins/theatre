@@ -140,8 +140,7 @@ class WPT_Events extends WPT_Listing {
 				$url = remove_query_arg(__('category','wp_theatre'));
 				$url = add_query_arg( __('category','wp_theatre'), $slug , $url);
 				$html.= '<span>';
-				
-				if ($slug != $_GET[__('category','wp_theatre')]) {
+				if (empty($_GET[__('category','wp_theatre')]) || $slug != $_GET[__('category','wp_theatre')]) {
 					$html.= '<a href="'.$url.'">'.$name.'</a>';
 				} else {
 					$html.= $name;
@@ -225,7 +224,8 @@ class WPT_Events extends WPT_Listing {
 			events
 			
 			JOIN $wpdb->postmeta AS productions on events.ID = productions.post_ID
-			LEFT OUTER JOIN $wpdb->term_relationships AS categories on productions.meta_value = categories.object_id
+			LEFT OUTER JOIN $wpdb->term_relationships AS term_relationships on productions.meta_value = term_relationships.object_id
+			LEFT OUTER JOIN $wpdb->term_taxonomy AS categories on term_relationships.term_taxonomy_id = categories.term_taxonomy_id
 			JOIN $wpdb->postmeta AS event_date on events.ID = event_date.post_ID
 			
 			WHERE 
@@ -247,7 +247,7 @@ class WPT_Events extends WPT_Listing {
 		}
 		
 		if ($filters['category']) {
-			$querystr.= ' AND term_taxonomy_id = %d';
+			$querystr.= ' AND categories.term_id = %d';
 			$value_parameters[] = $filters['category'];
 		}
 		
@@ -265,8 +265,6 @@ class WPT_Events extends WPT_Listing {
 
 		$querystr = $wpdb->prepare($querystr,$value_parameters);
 		
-		
-		echo '<!-- '.$querystr.'-->';
 		$posts = $wpdb->get_results($querystr, OBJECT);
 
 		$events = array();

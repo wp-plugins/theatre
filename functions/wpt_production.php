@@ -3,14 +3,10 @@ class WPT_Production {
 
 	const post_type_name = 'wp_theatre_prod';
 	
-	function __construct($ID=false, $PostClass=false) {
-		$this->PostClass = $PostClass;
-	
+	function __construct($ID=false) {	
 		if ($ID instanceof WP_Post) {
 			// $ID is a WP_Post object
-			if (!$PostClass) {
-				$this->post = $ID;
-			}
+			$this->post = $ID;
 			$ID = $ID->ID;
 		}
 
@@ -28,21 +24,31 @@ class WPT_Production {
 		return get_post_type_object(self::post_type_name);
 	}
 
+	function categories($args=array()) {
+		$defaults = array(
+			'html' => false
+		);
 
-	
-
-
-	function past_events() {
-		$events = $this->get_events();
+		$args = wp_parse_args( $args, $defaults );
 		
-		$past_events = array();
-		$now = time();
-		foreach ($events as $event)	{
-			if (strtotime($event->post()->event_date) < $now) {
-				$past_events[] = $event;
-			}
+		if (!isset($this->categories)) {
+			$this->categories = apply_filters('wpt_production_categories',wp_get_post_categories($this->ID),$this);
 		}
-		return $past_events;		
+		
+		if ($args['html']) {
+			if (!empty($this->categories)) {
+				$html = '';
+				$html.= '<ul class="wpt_production_categories">';
+				foreach ($this->categories as $category_id) {
+					$category = get_category( $category_id );
+					$html.= '<li>'.$category->name.'</li>';
+				}
+				$html.= '</ul>';
+				return apply_filters('wpt_production_categories_html', $html, $this);
+			}
+		} else {
+			return $this->categories;
+		}
 	}
 
 	/**
@@ -130,8 +136,8 @@ class WPT_Production {
 			$first_datetimestamp = $last_datetimestamp = '';
 			
 			$upcoming = $this->upcoming();
-			$events = $this->events();
 			if (is_array($upcoming) && (count($upcoming)>0)) {
+				$events = $this->events();
 				$first = $events[0];
 				$next = $upcoming[0];
 				$last = $events[count($events)-1];
@@ -334,16 +340,17 @@ class WPT_Production {
 	function thumbnail($args=array()) {
 		$defaults = array(
 			'html' => false,
+			'size' => 'thumbnail'
 		);
 		$args = wp_parse_args( $args, $defaults );
 		
-		if (!isset($this->thumbnail)) {
-			$this->thumbnail = get_post_thumbnail_id($this->ID);
+		if (!isset($this->thumbnails[$args['size']])) {
+			$this->thumbnails[$args['size']] = get_post_thumbnail_id($this->ID,$args['size']);
 		}	
 	
 		if ($args['html']) {
 			$html = '';
-			$thumbnail = get_the_post_thumbnail($this->ID,'thumbnail');					
+			$thumbnail = get_the_post_thumbnail($this->ID,$args['size']);					
 			if (!empty($thumbnail)) {
 				$html.= '<figure>';
 				$permalink_args = $args;
@@ -353,7 +360,7 @@ class WPT_Production {
 			}
 			return apply_filters('wpt_production_thumbnail_html', $html, $this);
 		} else {
-			return $this->thumbnail;			
+			return $this->thumbnails[$args['size']];			
 		}
 	}
 
@@ -410,10 +417,8 @@ class WPT_Production {
 	 *
 	 * @param array $args {
 	 *
-	 *	   @type array $fields Fields to include. Default <array('title','remark', 'datetime','location')>.
-	 *     @type array $hide Fields that should be included as invisible meta elements. Default <array()>
+	 *	   @type array $fields Fields to include. Default <array('title','dates','cities')>.
 	 *     @type bool $thumbnail Include thumbnail? Default <true>.
-	 *     @type bool $tickets Include tickets button? Default <true>.
 	 * }
 	 * @return string HTML.
 	 */
@@ -421,56 +426,36 @@ class WPT_Production {
 		global $wp_theatre;
 		
 		$defaults = array(
-			'fields' => array('title','dates','cities'),
-			'thumbnail' => true,
-			'hide' => array()
+			'template' => '{{thumbnail}} {{title}} {{dates}} {{cities}}'
 		);
 		$args = wp_parse_args( $args, $defaults );
 
-		$html = '';
+		$html = $args['template'];
 		
 		$classes = array();
 		$classes[] = self::post_type_name;
 
 		// Thumbnail
-		$thumbnail = false;
-		if ($args['thumbnail']) {
+		if (strpos($html,'{{thumbnail}}')!==false) { 
 			$thumbnail_args = array(
-				'html'=>true,
-				'meta'=>in_array('thumbnail', $args['hide'])
+				'html'=>true
 			);
 			$thumbnail = $this->thumbnail($thumbnail_args);
+			$html = str_replace('{{thumbnail}}', $thumbnail, $html);
 		}
 		if (empty($thumbnail)) {
 			$classes[] = self::post_type_name.'_without_thumbnail';
-		} else {
-			$html.= $thumbnail;
 		}
 
-		$html.= '<div class="'.self::post_type_name.'_main">';
-		foreach ($args['fields'] as $field) {
-			$field_args = array(
-				'html'=>true
-			);
-			switch ($field) {
-				case 'title':
-					$html.= $this->title($field_args);
-					break;
-				case 'dates':
-					$html.= $this->dates($field_args);
-					break;
-				case 'cities':
-					$html.= $this->cities($field_args);
-					break;
-				case 'excerpt':
-					$html.= $this->excerpt($field_args);
-					break;
-				case 'summary':
-					$html.= $this->summary($field_args);
-					break;
-			}
-		}
-		$html.= '</div>'; // .main
+		$field_args = array(
+			'html'=>true
+		);
+		if (strpos($html,'{{title}}')!==false) { $html = str_replace('{{title}}', $this->title($field_args), $html); }
+		if (strpos($html,'{{dates}}')!==false) { $html = str_replace('{{dates}}', $this->dates($field_args), $html); }
+		if (strpos($html,'{{cities}}')!==false) { $html = str_replace('{{cities}}', $this->cities($field_args), $html); }
+		if (strpos($html,'{{excerpt}}')!==false) { $html = str_replace('{{excerpt}}', $this->excerpt($field_args), $html); }
+		if (strpos($html,'{{summary}}')!==false) { $html = str_replace('{{summary}}', $this->title($field_args), $html); }
+		if (strpos($html,'{{categories}}')!==false) { $html = str_replace('{{categories}}', $this->categories($field_args), $html); }
 
 		// Microdata for events
 		if (!is_singular(WPT_Production::post_type_name)) {		
@@ -480,10 +465,14 @@ class WPT_Production {
 			$html.= $wp_theatre->events->meta($filters);
 		}
 
+		// Filters
+		$html = apply_filters('wpt_production_html',$html, $this);
+		$classes = apply_filters('wpt_production_classes',$classes, $this);
+
 		// Wrapper
 		$html = '<div class="'.implode(' ',$classes).'">'.$html.'</div>';
 		
-		return apply_filters('wpt_production_html',$html, $this);		
+		return $html;		
 	}
 
 	/**
@@ -560,11 +549,7 @@ class WPT_Production {
 
 	private function get_post() {
 		if (!isset($this->post)) {
-			if ($this->PostClass) {
-				$this->post = new $this->PostClass($this->ID);				
-			} else {
-				$this->post = get_post($this->ID);
-			}
+			$this->post = get_post($this->ID);
 		}
 		return $this->post;
 	}

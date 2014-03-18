@@ -18,8 +18,16 @@ class WPT_Admin {
 			add_filter('manage_wp_theatre_event_posts_columns', array($this,'manage_wp_theatre_event_posts_columns'), 10, 2);
 			add_action('manage_wp_theatre_prod_posts_custom_column', array($this,'manage_wp_theatre_prod_posts_custom_column'), 10, 2);
 			add_action('manage_wp_theatre_event_posts_custom_column', array($this,'manage_wp_theatre_event_posts_custom_column'), 10, 2);	
+			add_filter('manage_edit-wp_theatre_prod_sortable_columns', array($this,'manage_edit_wp_theatre_prod_sortable_columns') );
+			
+			add_filter( 'posts_join', array($this,'posts_join'), 10 ,2);
+			add_filter( 'posts_orderby', array($this,'posts_orderby'), 10 ,2);
+			add_filter( 'posts_groupby', array($this,'posts_groupby'), 10 ,2);
+			
+			add_filter('wpt_event_html',array($this,'wpt_event_html'), 10 , 2);
+			add_filter('wpt_production_html',array($this,'wpt_production_html'), 10 , 2);
 		}
-
+		
 		// More hooks (always load, necessary for bulk editing through AJAX)
 		add_action( 'bulk_edit_custom_box', array($this,'bulk_edit_custom_box'), 10, 2 );
 
@@ -313,7 +321,7 @@ class WPT_Admin {
 		if (is_numeric($current_production)) {
 			$production = new WPT_Production($current_production);
 			echo '<input type="hidden" name="'.WPT_Production::post_type_name.'" value="'.$current_production.'" />';
-			echo $this->render_production($production);
+			echo $production->html();
 		} else {
 			echo '<select name="'.WPT_Production::post_type_name.'">';
 			$args = array(
@@ -334,10 +342,18 @@ class WPT_Admin {
 		echo '</tr>';
 		
 		echo '<tr class="form-field">';
-		echo '<th><label>'.__('Event date','wp_theatre').'</label></th>';	
+		echo '<th><label>'.__('Start date','wp_theatre').'</label></th>';	
 		echo '<td>';
 		echo '<input type="text" class="wp_theatre_datepicker" name="event_date"';
         echo ' value="' . get_post_meta($event->ID,'event_date',true) . '" />';
+ 		echo '</td>';
+		echo '</tr>';
+       
+		echo '<tr class="form-field">';
+		echo '<th><label>'.__('End date','wp_theatre').'</label></th>';	
+		echo '<td>';
+		echo '<input type="text" class="wp_theatre_datepicker" name="enddate"';
+        echo ' value="' . get_post_meta($event->ID,'enddate',true) . '" />';
  		echo '</td>';
 		echo '</tr>';
        
@@ -491,7 +507,13 @@ class WPT_Admin {
 
 		// Sanitize the user input.
 		$production = sanitize_text_field( $_POST[WPT_Production::post_type_name] );
-		$event_date = sanitize_text_field( $_POST['event_date'] );
+		
+		$event_date = strtotime($_POST['event_date']);
+		$enddate = strtotime($_POST['enddate']);
+		if ($enddate<$event_date) {
+			$enddate = $event_date;
+		}
+
 		$venue = sanitize_text_field( $_POST['venue'] );
 		$city = sanitize_text_field( $_POST['city'] );
 		$remark = sanitize_text_field( $_POST['remark'] );
@@ -501,7 +523,8 @@ class WPT_Admin {
 		
 		// Update the meta field.
 		update_post_meta( $post_id, WPT_Production::post_type_name, $production );
-		update_post_meta( $post_id, 'event_date', $event_date );
+		update_post_meta( $post_id, 'event_date', date('Y-m-d H:i:s',$event_date) );
+		update_post_meta( $post_id, 'enddate', date('Y-m-d H:i:s',$enddate) );
 		update_post_meta( $post_id, 'venue', $venue );
 		update_post_meta( $post_id, 'city', $city );
 		update_post_meta( $post_id, 'remark', $remark );
@@ -690,10 +713,16 @@ class WPT_Admin {
 	function manage_wp_theatre_prod_posts_columns($columns) {
 		$new_columns = array();
 		foreach($columns as $key => $value) {
-			$new_columns[$key] = $value;
-			if ($key == 'title') {
-				$new_columns['dates'] = __('Dates','wp_theatre');
-				$new_columns['cities'] = __('Cities','wp_theatre');
+			switch ($key) {
+				case 'date' :
+					break;
+				case 'title' :
+					$new_columns['thumbnail'] = __('Thumbnail','wp_theatre');
+					$new_columns[$key] = $value;			
+					$new_columns['dates'] = __('Dates','wp_theatre');
+					break;
+				default :
+					$new_columns[$key] = $value;								
 			}
 		}
 
@@ -714,10 +743,11 @@ class WPT_Admin {
 	function manage_wp_theatre_prod_posts_custom_column($column_name, $post_id) {
 		$production = new WPT_Production($post_id);
 		switch($column_name) {
-			case 'dates':
-				echo $production->dates();
+			case 'thumbnail':
+				echo $production->thumbnail(array('html'=>true));
 				break;
-			case 'cities':
+			case 'dates':
+				echo $production->dates().'<br />';
 				echo $production->cities();
 				break;
 		}
@@ -737,6 +767,11 @@ class WPT_Admin {
 		
 	}
 
+    function manage_edit_wp_theatre_prod_sortable_columns($columns) {
+		$columns['dates'] = 'dates';
+		return $columns;
+    }
+
 	function quick_edit_custom_box($column_name, $post_type) {
 	    static $printNonce = TRUE;
 	    if ( $printNonce ) {
@@ -749,14 +784,6 @@ class WPT_Admin {
 		wp_nonce_field($post_type, $post_type.'_nonce' );
 	}
 	
-	function wpt_event($html,$event) {
-		$html.= '<div class="row-actions">';
-		$html.= '<span><a href="'.get_edit_post_link($event->production->ID).'">'.__('Edit').'</a></span>';;
-		$html.= '<span> | <a href="'.get_delete_post_link($event->production->ID).'">'.__('Trash').'</a></span>';;
-		$html.= '</div>'; //.row-actions
-		return $html;
-	}
-
 	/**
 	 * Admin setting.
 	 */
@@ -923,7 +950,78 @@ class WPT_Admin {
 		echo '<p class="description">'.__('Leave unchecked if this causes conflicts with SEO plugins.','wp_theatre').'</p>';
 		
 	}
-    	
+	
+	function posts_join($join, $query) {
+		global $wpdb;
+		if (
+			isset( $query->query_vars['orderby'] ) && 
+			'dates' == $query->query_vars['orderby'] &&
+			is_admin() &&
+			is_post_type_archive(WPT_Production::post_type_name)
+		) {
+			$join.="
+				LEFT JOIN (
+					SELECT production.meta_value AS ID, date.meta_value AS event_date
+					FROM $wpdb->posts
+					LEFT JOIN $wpdb->postmeta AS date ON date.post_id = $wpdb->posts.ID
+					AND date.meta_key = 'event_date'
+					LEFT JOIN $wpdb->postmeta AS production ON production.post_id = $wpdb->posts.ID
+					AND production.meta_key = 'wp_theatre_prod'
+					WHERE $wpdb->posts.post_type = 'wp_theatre_event'
+					AND (
+						$wpdb->posts.post_status = 'publish'
+						OR $wpdb->posts.post_status = 'future'
+						OR $wpdb->posts.post_status = 'draft'
+						OR $wpdb->posts.post_status = 'pending'
+						OR $wpdb->posts.post_status = 'private'
+					)
+					ORDER BY date.meta_value DESC
+				) AS startdate ON startdate.ID = $wpdb->posts.ID
+			";
+			return $join;
+		}
+	}
+
+	function posts_orderby($orderby, $query) {
+		if (
+			isset( $query->query_vars['orderby'] ) && 
+			'dates' == $query->query_vars['orderby'] &&
+			is_admin() &&
+			is_post_type_archive(WPT_Production::post_type_name)
+		) {
+			$orderby= "startdate.event_date ".$query->query_vars['order'];
+			return $orderby;
+		}
+	}
+
+	function posts_groupby($groupby, $query) {
+		global $wpdb;
+		if (
+			isset( $query->query_vars['orderby'] ) && 
+			'dates' == $query->query_vars['orderby'] &&
+			is_admin() &&
+			is_post_type_archive(WPT_Production::post_type_name)
+		) {
+			$groupby = "$wpdb->posts.ID";
+			return $groupby;
+		}
+	}
+
+    function wpt_event_html($html, $event) {
+		$html.= '<div class="row-actions">';
+		$html.= '<span><a href="'.get_edit_post_link($event->production->ID).'">'.__('Edit').'</a></span>';;
+		$html.= '<span> | <a href="'.get_delete_post_link($event->production->ID).'">'.__('Trash').'</a></span>';;
+		$html.= '</div>'; //.row-actions
+		return $html;
+    }
+
+    function wpt_production_html($html, $production) {
+		$html.= '<div class="row-actions">';
+		$html.= '<span><a href="'.get_edit_post_link($production->ID).'">'.__('Edit').'</a></span>';;
+		$html.= '<span> | <a href="'.get_delete_post_link($production->ID).'">'.__('Trash').'</a></span>';;
+		$html.= '</div>'; //.row-actions
+		return $html;
+    }
 }
 
 

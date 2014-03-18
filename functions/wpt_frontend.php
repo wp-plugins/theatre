@@ -85,7 +85,7 @@ class WPT_Frontend {
 			) {
 				$production = new WPT_Production();			
 				$events_html = '<h3>'.WPT_Event::post_type()->labels->name.'</h3>';
-				$events_html.= '[wpt_production_events]';
+				$events_html.= '[wpt_production_events]{{remark}} {{datetime}} {{location}} {{tickets}}[/wpt_production_events]';
 				
 				switch ($wp_theatre->options['show_events']) {
 					case 'above' :
@@ -105,29 +105,12 @@ class WPT_Frontend {
 		$atts = shortcode_atts( array(
 			'paged' => false,
 			'grouped' => false,
-			'thumbnail' => true,
-			'fields' => null,
-			'hide' => null,
 			'upcoming' => true,
-			'past' => 'false',
+			'past' => false,
 			'paginateby'=>array(),
 			'groupby'=>false
 		), $atts );
 				
-		$hide = explode(',',$atts['hide']);
-		for ($i=0;$i<count($hide);$i++) {
-			$hide[$i] = trim($hide[$i]);
-		}
-		$atts['hide'] = $hide;
-		
-		if (!empty($atts['fields'])) {
-			$fields = explode(',',$atts['fields']);
-			for ($i=0;$i<count($fields);$i++) {
-				$fields[$i] = trim($fields[$i]);
-			}
-			$atts['fields'] = $fields;
-		}
-
 		if (!empty($atts['paginateby'])) {
 			$fields = explode(',',$atts['paginateby']);
 			for ($i=0;$i<count($fields);$i++) {
@@ -135,13 +118,11 @@ class WPT_Frontend {
 			}
 			$atts['paginateby'] = $fields;
 		}
-
-
 		
-		if (!empty($atts['thumbnail'])) {
-			$atts['thumbnail'] = $atts['thumbnail'] == 1;
+		if (!is_null($content) && !empty($content)) {
+			$atts['template'] = html_entity_decode($content);
 		}
-		
+
 		$wp_theatre->events->filters['upcoming'] = true;
 		return $wp_theatre->events->html($atts);
 	}
@@ -152,34 +133,21 @@ class WPT_Frontend {
 		$atts = shortcode_atts( array(
 			'paged' => false,
 			'grouped' => false,
-			'fields' => null,
-			'hide' => null,
 			'paginateby' => array(),
 			'groupby' => false,
-			'upcoming' => false,
-			'thumbnail' => true
+			'upcoming' => false
 		), $atts );
 				
-		if (!empty($atts['fields'])) {
-			$fields = explode(',',$atts['fields']);
-			for ($i=0;$i<count($fields);$i++) {
-				$fields[$i] = trim($fields[$i]);
-			}
-			$atts['fields'] = $fields;
-		}
-		
-		$hide = explode(',',$atts['hide']);
-		for ($i=0;$i<count($hide);$i++) {
-			$hide[$i] = trim($hide[$i]);
-		}
-		$atts['hide'] = $hide;
-		
 		if (!empty($atts['paginateby'])) {
 			$fields = explode(',',$atts['paginateby']);
 			for ($i=0;$i<count($fields);$i++) {
 				$fields[$i] = trim($fields[$i]);
 			}
 			$atts['paginateby'] = $fields;
+		}
+
+		if (!is_null($content) && !empty($content)) {
+			$atts['template'] = html_entity_decode($content);
 		}
 
 		return $wp_theatre->productions->html($atts);
@@ -234,26 +202,14 @@ class WPT_Frontend {
 	function wpt_production_events($atts, $content=null) {
 		global $wp_theatre;
 
-		$atts = shortcode_atts( array(
-			'fields' => null,
-			'hide' => 'title',
-		), $atts );
-				
-		$hide = explode(',',$atts['hide']);
-		for ($i=0;$i<count($hide);$i++) {
-			$hide[$i] = trim($hide[$i]);
-		}
-		$atts['hide'] = $hide;
-
 		if (is_singular(WPT_Production::post_type_name)) {
-			$args = array(
-				'thumbnail' => false,
-				'hide' => array('title'),
-				'fields' => $atts['fields'],
-				'hide' => $atts['hide'],
-				'production' => get_the_ID()
-			);
+			$args = array();
+			$args['production'] = get_the_ID();
 		
+			if (!is_null($content) && !empty($content)) {
+				$args['template'] = html_entity_decode($content);
+			}
+			
 			return $wp_theatre->events->html($args);
 		}
 	}

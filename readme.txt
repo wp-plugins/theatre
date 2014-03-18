@@ -14,7 +14,7 @@ This plugin gives you the ability to manage seasons, productions and events in W
 
 __Shortcodes__
 
-Theatre comes with several shortcodes and widget to show off your events. See the [documentation](https://github.com/slimndap/wp-theatre/wiki/Shortcodes) for an overview.
+Theatre comes with several shortcodes and widgets to show off your events. See the [documentation](https://github.com/slimndap/wp-theatre/wiki/Shortcodes) for an overview.
 
 __Available add-ons__
 
@@ -61,6 +61,11 @@ __All event listings look really weird!__
 Make sure that you checked the 'Enable built-in Theatre stylesheet'-option in the Theatre plugin settings.
 
 == Changelog ==
+
+= 0.6 =
+* Added support for templates and placeholders in the [wpt_events], [wpt_productions] and [wpt_production_events] shortcodes. See the [documentation](https://github.com/slimndap/wp-theatre/wiki/Shortcodes).
+* Sort your productions by date on the production admin page.
+* Added an end time to events so events can display a 'duration'.
 
 = 0.5 =
 * Production categories/genres.
@@ -144,6 +149,6 @@ Make sure that you checked the 'Enable built-in Theatre stylesheet'-option in th
 
 == Upgrade Notice ==
 
-= 0.5.3 =
+= 0.6 =
 
-* v0.5.3 fixes a bug where the status of events got lost after bulk editing productions.
+* v0.6 requires you to update your shortcodes. Please check the [documentation](https://github.com/slimndap/wp-theatre/wiki/Shortcodes) for the details.

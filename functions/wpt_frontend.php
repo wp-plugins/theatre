@@ -108,7 +108,8 @@ class WPT_Frontend {
 			'upcoming' => true,
 			'past' => false,
 			'paginateby'=>array(),
-			'groupby'=>false
+			'groupby'=>false,
+			'limit'=>false
 		), $atts );
 				
 		if (!empty($atts['paginateby'])) {
@@ -134,8 +135,9 @@ class WPT_Frontend {
 			'paged' => false,
 			'grouped' => false,
 			'paginateby' => array(),
-			'groupby' => false,
-			'upcoming' => false
+			'upcoming' => false,
+			'groupby'=>false,
+			'limit'=>false
 		), $atts );
 				
 		if (!empty($atts['paginateby'])) {
@@ -208,7 +210,10 @@ class WPT_Frontend {
 		
 			if (!is_null($content) && !empty($content)) {
 				$args['template'] = html_entity_decode($content);
+			} else {
+				$args['template'] = '{{remark}} {{datetime}} {{location}} {{tickets}}';
 			}
+			
 			
 			return $wp_theatre->events->html($args);
 		}

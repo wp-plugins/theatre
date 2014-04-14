@@ -12,7 +12,7 @@ class WPT_Admin {
 			add_action( 'quick_edit_custom_box', array($this,'quick_edit_custom_box'), 10, 2 );
 			add_action( 'wp_dashboard_setup', array($this,'wp_dashboard_setup' ));
 
-			add_action( 'save_post_'.WPT_Production::post_type_name, array( $this, 'save_production' ) );
+			add_action( 'save_post_'.WPT_Production::post_type_name, array( $this, 'save_production' ) , 10);
 			add_action( 'save_post_'.WPT_Event::post_type_name, array( $this, 'save_event' ) );
 
 			add_filter('manage_wp_theatre_prod_posts_columns', array($this,'manage_wp_theatre_prod_posts_columns'), 10, 2);
@@ -37,8 +37,7 @@ class WPT_Admin {
 		// Tabs on settings screens
 		$this->tabs = array(
 			'wp_theatre'=>__('General'),
-			'wpt_language'=>__('Language','wp_theatre'),
-			'wpt_social'=>__('Social','wp_theatre')
+			'wpt_language'=>__('Language','wp_theatre')
 		);
 		$this->tab = isset( $_GET['tab'] ) ? $_GET['tab'] : 'wp_theatre';
 	}	
@@ -160,27 +159,6 @@ class WPT_Admin {
        
 		}
 		
-        register_setting(
-            'wpt_social', // Option group
-            'wpt_social' // Option name
-        );
-		if ($this->tab=='wpt_social') {
-        
-	        add_settings_section(
-	            'sharing', // ID
-	            __('Sharing','wp_theatre'), // Title
-	            '', // Callback
-	            'wpt_social' // Page
-	        );  
-	
-	        add_settings_field(
-	            'social_meta_tags', // ID
-	            __('Add social meta tags on production pages for:','wp_theatre'), // Title 
-	            array( $this, 'settings_field_social_meta_tags' ), // Callback
-	            'wpt_social', // Page
-	            'sharing' // Section           
-	        );
-		}
 	}
 
 	function admin_menu() {
@@ -420,6 +398,15 @@ class WPT_Admin {
 		echo '<span>'.__('Sold out','wp_theatre').'</span>';
 		echo '</label><br />';
 		
+		echo '<label>';
+		echo '<input type="radio" name="tickets_status" value="cancelled"';
+		if ($status=='cancelled') {
+			echo ' checked="checked"';
+		}
+		echo '> ';
+		echo '<span>'.__('Cancelled','wp_theatre').'</span>';
+		echo '</label><br />';
+		
  		echo '</td>';
 		echo '</tr>';
 		
@@ -429,6 +416,22 @@ class WPT_Admin {
 						
 		echo '<input type="text" name="tickets_button"';
         echo ' value="' . get_post_meta($event->ID,'tickets_button',true) . '" />';
+ 		echo '</td>';
+		echo '</tr>';
+       
+       
+       
+  		// Prices
+  		$label = __('Prices','wp_theatre');
+  		if (!empty($this->options['currencysymbol'])) {
+	  		$label.= ' ('.$this->options['currencysymbol'].')';
+  		}
+  		echo '<tr>';
+		echo '<th><label>'.$label.'</label></th>';	
+		echo '<td>';
+						
+		echo '<input type="text" name="_wpt_event_tickets_prices"';
+        echo ' value="' . implode(', ',get_post_meta($event->ID,'_wpt_event_tickets_price')) . '" />';
  		echo '</td>';
 		echo '</tr>';
        
@@ -525,6 +528,15 @@ class WPT_Admin {
 		update_post_meta( $post_id, 'tickets_url', $tickets_url );
 		update_post_meta( $post_id, 'tickets_status', $tickets_status );
 		update_post_meta( $post_id, 'tickets_button', $tickets_button );
+		update_post_meta( $post_id, '_wpt_tickets_prices', $prices );
+		
+		// Prices
+		delete_post_meta($post_id, '_wpt_event_tickets_prices');
+
+		$prices = explode(',',$_POST['_wpt_event_tickets_prices']);
+		for ($p=0;$p<count($prices);$p++) {
+			add_post_meta($post_id,'_wpt_event_tickets_price', (float) $prices[$p]);
+		}
 		
 	}
 	
@@ -656,8 +668,9 @@ class WPT_Admin {
 		$html.= '</div>'; //.content
 
 		$html.= '<div class="tickets">';
-		if (get_post_meta($event->ID,'tickets_status',true) == 'soldout') {
-			$html.= __('Sold out', 'wp_theatre');
+		$status = get_post_meta($event->ID,'tickets_status',true);
+		if (!empty($status)) {
+			$html.= '<span class="'.WPT_Event::post_type_name.'_tickets_status '.WPT_Event::post_type_name.'_tickets_status_'.$status.'">'.__($status, 'wp_theatre').'</span>';
 		} else {
 			$url = get_post_meta($event->ID,'tickets_url',true);
 			if ($url!='') {
@@ -924,34 +937,6 @@ class WPT_Admin {
 
 	}
 
-	function settings_field_social_meta_tags() {
-		global $wp_theatre;
-		
-		$options = array(
-			'facebook' => __('Facebook (Open Graph)','wp_theatre'),
-			'twitter' => __('Twitter (Twitter Card)','wp_theatre'),
-			'google+' => __('Google+ (Schema.org)','wp_theatre'),
-		
-		);
-		foreach ($options as $key=>$value) {
-			echo '<label>';
-			echo '<input type="checkbox" id="'.$key.'" name="wpt_social[social_meta_tags][]" value="'.$key.'"';
-			if (is_array($wp_theatre->wpt_social_options['social_meta_tags']) && in_array($key, $wp_theatre->wpt_social_options['social_meta_tags'])) {
-				echo ' checked="checked"';
-			}
-			
-			echo '/>';
-			echo $value;
-			echo '</label>';
-			echo '<br />';
-			
-		}
-		
-		echo '<p class="description">'.__('Make your productions shine on social networks.','wp_theatre').'</p>';
-		echo '<p class="description">'.__('Leave unchecked if this causes conflicts with SEO plugins.','wp_theatre').'</p>';
-		
-	}
-	
 	function request($vars) {
 		if ( isset( $vars['orderby'] ) && 'dates' == $vars['orderby'] ) {
 		    $vars = array_merge( $vars, array(

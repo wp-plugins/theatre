@@ -4,7 +4,7 @@ Plugin Name: Theatre
 Plugin URI: http://wordpress.org/plugins/theatre/
 Description: Turn your Wordpress website into a theatre website.
 Author: Jeroen Schmit, Slim & Dapper
-Version: 0.6.3
+Version: 0.7
 Author URI: http://slimndap.com/
 Text Domain: wp_theatre
 Domain Path: /lang
@@ -25,10 +25,10 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
  *	echo $wp_theatre->events->html_listing($args); // a list of all upcoming events, paginated by month
  */
 
+$wpt_version = '0.7';
+
 class WP_Theatre {
 	function __construct() {
-		$this->version = '0.6.3';
-
 		// Includes
 		$this->includes();
 	
@@ -38,6 +38,8 @@ class WP_Theatre {
 		$this->events = new WPT_Events();
 		$this->productions = new WPT_Productions();
 		$this->order = new WPT_Order();
+		$this->feeds = new WPT_Feeds();
+		$this->transient = new WPT_Transient();
 		if (is_admin()) {
 		} else {
 			$this->frontend = new WPT_Frontend();
@@ -51,7 +53,6 @@ class WP_Theatre {
 
 		// Hooks
 		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this->setup, 'plugin_action_links' ) );
-
 
 		// Plugin (de)activation hooks
 		register_activation_hook( __FILE__, array($this, 'activate' ));		
@@ -93,11 +94,16 @@ class WP_Theatre {
 		require_once(__DIR__ . '/functions/wpt_widget.php');
 		require_once(__DIR__ . '/functions/wpt_admin.php');
 		require_once(__DIR__ . '/functions/wpt_order.php');
+		require_once(__DIR__ . '/functions/wpt_feeds.php');	
+		require_once(__DIR__ . '/functions/wpt_transient.php');	
 		if (is_admin()) {
 		} else {
 			require_once(__DIR__ . '/functions/wpt_frontend.php');
 			require_once(__DIR__ . '/functions/wpt_cart.php');	
 		}
+		require_once(__DIR__ . '/integrations/wordpress-seo.php');
+		require_once(__DIR__ . '/integrations/jetpack-featured-content.php');
+		
 	}
 	
 	public function seasons($PostClass = false) {
@@ -105,12 +111,14 @@ class WP_Theatre {
 	}		
 
 	function activate() {
-		wp_schedule_event( time(), 'wpt_schedule', 'wpt_cron');		
+		wp_schedule_event( time(), 'wpt_schedule', 'wpt_cron');
+		flush_rewrite_rules();		
 	}
 	
 	function deactivate() {
 		wp_clear_scheduled_hook('wpt_cron');
-		delete_post_meta_by_key('wpt_order');
+		delete_post_meta_by_key($this->order->meta_key);
+		flush_rewrite_rules();		
 	}
 
 	/*

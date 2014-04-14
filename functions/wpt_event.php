@@ -285,32 +285,34 @@ class WPT_Event {
 		$args = wp_parse_args( $args, $defaults );
 
 		if (!isset($this->prices)) {
-			$this->prices = apply_filters('wpt_event_prices',get_post_meta($this->ID,'price',false), $this);
+			$this->prices = apply_filters('wpt_event_tickets_prices',get_post_meta($this->ID,'_wpt_event_tickets_price'), $this);
 		}
 
 		if ($args['html']) {
-			$html = '';
-			$html.= '<div class="'.self::post_type_name.'_prices">';
 			$prices_args = array(
 				'summary' => $args['summary']
 			);
-			$html.= $this->prices($prices_args);
-			$html.= '</div>';
-			return apply_filters('wpt_event_prices_html', $html, $this);				
+			$html = $this->prices($prices_args);
+			
+			if (!empty($html)) {
+				$html= '<div class="'.self::post_type_name.'_prices">'.$html.'</div>';
+				
+			}
+			return apply_filters('wpt_event_tickets_prices_html', $html, $this);				
 		} else {
 			if ($args['summary']) {
 				$summary = '';
 				if (count($this->prices)>0) {
 					if (count($this->prices)==1) {
-						$summary = $wp_theatre->options['currencysymbol'].'&nbsp;'.number_format_i18n($this->prices[0]->price,2);
+						$summary = $wp_theatre->options['currencysymbol'].'&nbsp;'.number_format_i18n($this->prices[0],2);
 					} else {
-						$lowest = $this->prices[0]->price;
+						$lowest = $this->prices[0];
 						for($p=1;$p<count($this->prices);$p++) {
-							if ($lowest > $this->prices[$p]->price) {
-								$lowest = $this->prices[$p]->price;
+							if ($lowest > $this->prices[$p]) {
+								$lowest = $this->prices[$p];
 							}
 						}
-						$summary = __('from','wp_theatre').' '.$wp_theatre->options['currencysymbol'].'&nbsp;'.number_format_i18n($this->prices[0]->price,2);
+						$summary = __('from','wp_theatre').' '.$wp_theatre->options['currencysymbol'].'&nbsp;'.number_format_i18n($lowest,2);
 					}
 				}
 				return $summary;
@@ -407,9 +409,12 @@ class WPT_Event {
 		}	
 		
 		if ($args['html']) {
-			$html = '<div class="'.self::post_type_name.'_tickets">';			
-			if (get_post_meta($this->ID,'tickets_status',true) == 'soldout') {
-				$html.= '<span class="'.self::post_type_name.'_soldout">'.__('Sold out', 'wp_theatre').'</span>';
+			$html = '<div class="'.self::post_type_name.'_tickets">';
+			
+			$status = get_post_meta($this->ID,'tickets_status',true);
+			if (!empty($status)) {
+				$html.= '<span class="'.self::post_type_name.'_tickets_status '.self::post_type_name.'_tickets_status_'.$status.'">'.__($status, 'wp_theatre').'</span>';
+				
 			} else {
 				if (!empty($this->tickets)) {
 					$html.= '<a href="'.$this->tickets.'" rel="nofollow"';
@@ -513,7 +518,7 @@ class WPT_Event {
 	 */
 	function html($args=array()) {
 		$defaults = array(
-			'template' => '{{thumbnail}} {{title}} {{remark}} {{datetime}} {{location}} {{tickets}}'
+			'template' => '{{thumbnail|permalink}} {{title|permalink}} {{remark}} {{datetime}} {{location}} {{tickets}}'
 		);
 		$args = wp_parse_args( $args, $defaults );
 
@@ -522,29 +527,58 @@ class WPT_Event {
 
 		$html = $args['template'];
 
-		// Thumbnail
-		if (strpos($html,'{{thumbnail}}')!==false) { 
-			$thumbnail_args = array(
-				'html'=>true
-			);
-			$thumbnail = $this->production()->thumbnail($thumbnail_args);
-			$html = str_replace('{{thumbnail}}', $thumbnail, $html);
-		}
-		if (empty($thumbnail)) {
-			$classes[] = self::post_type_name.'_without_thumbnail';
+		// Parse template
+		$placeholders = array();
+		preg_match_all('~{{(.*?)}}~', $html, $placeholders);
+		foreach($placeholders[1] as $placeholder) {
+
+			$field = '';
+			$filter = '';
+
+			$placeholder_parts = explode('|',$placeholder);
+			if (!empty($placeholder_parts[0])) {
+				$field = $placeholder_parts[0];
+			}
+			if (!empty($placeholder_parts[1])) {
+				$filter = $placeholder_parts[1];
+			}
+
+			switch($field) {
+				case 'date':
+				case 'datetime':
+				case 'duration':
+				case 'location':
+				case 'remark':
+				case 'time':
+				case 'tickets':
+					$replacement = $this->{$field}(array('html'=>true));
+					break;
+				case 'title':
+				case 'categories':
+				case 'thumbnail':
+					$replacement = $this->production()->{$field}(array('html'=>true));
+					break;
+				default: 
+					$replacement = $field;
+			}
+			
+			switch($filter) {
+				case 'permalink':
+					if (!empty($replacement)) {
+						$args = array(
+							'html'=>true,
+							'text'=> $replacement,
+							'inside'=>true
+						);
+						$replacement = $this->production()->permalink($args);
+					}
+					break;
+				default:
+					$replacement = $replacement;
+			}
+			$html = str_replace('{{'.$placeholder.'}}', $replacement, $html);
 		}
 
-		$field_args = array(
-			'html'=>true
-		);
-		if (strpos($html,'{{date}}')!==false) { $html = str_replace('{{date}}', $this->date($field_args), $html); }
-		if (strpos($html,'{{datetime}}')!==false) { $html = str_replace('{{datetime}}', $this->datetime($field_args), $html); }
-		if (strpos($html,'{{duration}}')!==false) { $html = str_replace('{{duration}}', $this->duration($field_args), $html); }
-		if (strpos($html,'{{location}}')!==false) { $html = str_replace('{{location}}', $this->location($field_args), $html); }
-		if (strpos($html,'{{remark}}')!==false) { $html = str_replace('{{remark}}', $this->remark($field_args), $html); }
-		if (strpos($html,'{{time}}')!==false) { $html = str_replace('{{time}}', $this->time($field_args), $html); }
-		if (strpos($html,'{{title}}')!==false) { $html = str_replace('{{title}}', $this->production()->title($field_args), $html); }
-		if (strpos($html,'{{categories}}')!==false) { $html = str_replace('{{categories}}', $this->production()->categories($field_args), $html); }
 
 		// Tickets
 		if (strpos($html,'{{tickets}}')!==false) { 

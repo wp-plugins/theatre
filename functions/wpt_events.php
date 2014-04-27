@@ -62,6 +62,7 @@ class WPT_Events extends WPT_Listing {
 			'paginateby' => array(),
 			'groupby'=>false,
 			'production' => false,
+			'season' => false,
 			'limit' => false,
 			'category' => false,
 			'template' => NULL
@@ -88,11 +89,12 @@ class WPT_Events extends WPT_Listing {
 
 		if (in_array('month',$args['paginateby'])) {
 			$months = $this->months($filters);
-			
-			if (!empty($_GET[__('month','wp_theatre')])) {
-				$filters['month'] = $_GET[__('month','wp_theatre')];
-			} else {
-				$filters['month'] = $months[0];
+			if (!empty($months)) {
+				if (!empty($_GET[__('month','wp_theatre')])) {
+					$filters['month'] = $_GET[__('month','wp_theatre')];
+				} else {
+					$filters['month'] = $months[0];
+				}				
 			}
 
 			$html.= '<nav class="wpt_event_months">';
@@ -239,7 +241,6 @@ class WPT_Events extends WPT_Listing {
 		global $wp_theatre;
 		
 		$filters = wp_parse_args( $filters, $this->defaults() );
-
 		$args = array(
 			'post_type' => WPT_Event::post_type_name,
 			'post_status' => $filters['status'],
@@ -290,16 +291,14 @@ class WPT_Events extends WPT_Listing {
 			
 		}
 
-
 		$posts = get_posts($args);
-		
 		$events = array();
 		for ($i=0;$i<count($posts);$i++) {
 			$key = $posts[$i]->ID;
 			$event = new WPT_Event($posts[$i]->ID);
 			$events[] = $event;
 		}
-		
+
 		return $events;
 	}
 
@@ -310,7 +309,7 @@ class WPT_Events extends WPT_Listing {
 	function months($filters=array()) {
 		// get all event according to remaining filters
 		$filters['month'] = false;
-		$events = $this->get($filters);		
+		$events = $this->load($filters);		
 		$months = array();
 		foreach ($events as $event) {
 			$months[] = date('Y-m',$event->datetime());

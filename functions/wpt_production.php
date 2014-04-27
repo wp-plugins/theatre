@@ -136,6 +136,7 @@ class WPT_Production {
 			$first_datetimestamp = $last_datetimestamp = '';
 			
 			$upcoming = $this->upcoming();
+
 			if (is_array($upcoming) && (count($upcoming)>0)) {
 				$events = $this->events();
 				$first = $events[0];
@@ -167,13 +168,19 @@ class WPT_Production {
 		}
 	}
 
-	function events() {
+	function events($filters = array()) {
 		global $wp_theatre;
+
+		$defaults = array(
+			'production'=>$this->ID,
+			'status'=>$this->post()->post_type
+		);			
+
+		$filters = wp_parse_args( $filters, $defaults );
+
 		if (!isset($this->events)) {
-			$filters = array(
-				'production'=>$this->ID
-			);			
-			$this->events = $wp_theatre->events($filters);
+			$this->events = $wp_theatre->events->load($filters);
+			
 		}
 		return $this->events;
 	}
@@ -223,7 +230,7 @@ class WPT_Production {
 				'production' => $this->ID,
 				'past' => true
 			);
-			$this->past = $wp_theatre->events($filters);
+			$this->past = $wp_theatre->events->load($filters);
 		}
 		return $this->past;
 	}
@@ -425,10 +432,9 @@ class WPT_Production {
 		global $wp_theatre;
 		if (!isset($this->upcoming)) {
 			$filters = array(
-				'production' => $this->ID,
 				'upcoming' => true
 			);
-			$this->upcoming = $wp_theatre->events($filters);
+			$this->upcoming = $this->events($filters);
 		}
 		return $this->upcoming;
 	}

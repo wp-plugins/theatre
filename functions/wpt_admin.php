@@ -260,7 +260,7 @@ class WPT_Admin {
 				'status' => array('publish','draft')
 			);
 		
-			$events = $wp_theatre->events($args);
+			$events = $wp_theatre->events->load($args);
 			if (count($events)>0) {
 				echo '<ul>';
 				foreach ($events as $event) {
@@ -530,14 +530,16 @@ class WPT_Admin {
 		update_post_meta( $post_id, 'remark', $remark );
 		update_post_meta( $post_id, 'tickets_url', $tickets_url );
 		update_post_meta( $post_id, 'tickets_button', $tickets_button );
-		update_post_meta( $post_id, '_wpt_tickets_prices', $prices );
 		
 		// Prices
-		delete_post_meta($post_id, '_wpt_event_tickets_prices');
+		delete_post_meta($post_id, '_wpt_event_tickets_price');
 
 		$prices = explode(',',$_POST['_wpt_event_tickets_prices']);
 		for ($p=0;$p<count($prices);$p++) {
-			add_post_meta($post_id,'_wpt_event_tickets_price', (float) $prices[$p]);
+			$price = (float) $prices[$p];
+			if ($price>0) {
+				add_post_meta($post_id,'_wpt_event_tickets_price', (float) $prices[$p]);			
+			}
 		}
 		
 		// Tickets status
@@ -582,7 +584,6 @@ class WPT_Admin {
 		
 		// Update the meta field.
 		update_post_meta( $post_id, WPT_Season::post_type_name, $season );
-		update_post_meta( $post_id, 'sticky', $sticky );
 		
 		/*
 		 *	 Update connected Events
@@ -671,32 +672,6 @@ class WPT_Admin {
 
 		$html.= '</div>'; //.content
 
-		$html.= '<div class="tickets">';
-		$status = get_post_meta($event->ID,'tickets_status',true);
-		if (!empty($status)) {
-			$html.= '<span class="'.WPT_Event::post_type_name.'_tickets_status '.WPT_Event::post_type_name.'_tickets_status_'.$status.'">'.__($status, 'wp_theatre').'</span>';
-		} else {
-			$url = get_post_meta($event->ID,'tickets_url',true);
-			if ($url!='') {
-				$html.= '<a href="'.get_post_meta($event->ID,'tickets_url',true).'" class="button">';
-				$button_text = get_post_meta($event->ID,'tickets_button',true);
-				if ($button_text!='') {
-					$html.= $button_text;
-				} else {
-					$html.= __('Tickets','wp_theatre');			
-				}
-				$html.= '</a>';
-				
-			}
-		}
-
-		$summary = $event->summary();
-		if ($summary['prices']!='') {
-			$html.= '<div class="prices">'.$summary['prices'].'</div>';
-		}
-		
-		$html.= '</div>'; //.tickets
-		
 		$html.='</div>'; // .event
 		
 		return $html;	
@@ -942,16 +917,17 @@ class WPT_Admin {
 	}
 
 	function request($vars) {
+		global $wp_theatre;
 		if ( isset( $vars['orderby'] ) && 'dates' == $vars['orderby'] ) {
 		    $vars = array_merge( $vars, array(
-		        'meta_key' => 'wpt_order',
+		        'meta_key' => $wp_theatre->order->meta_key,
 		        'orderby' => 'meta_value_num'
 		    ) );
 		}
 		if (!empty($_GET['upcoming'])) {
 			$vars['meta_query'] = array(
 				array(
-					'key' => 'wpt_order',
+					'key' => $wp_theatre->order->meta_key,
 					'value' => time(),
 					'compare' => '>=',
 					'type' => 'numeric'

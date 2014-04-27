@@ -1,10 +1,10 @@
 <?php
 /*
-Plugin Name: Theatre
+Plugin Name: Theater
 Plugin URI: http://wordpress.org/plugins/theatre/
-Description: Turn your Wordpress website into a theatre website.
+Description: Turn your Wordpress website into a theater website.
 Author: Jeroen Schmit, Slim & Dapper
-Version: 0.7.3
+Version: 0.7.4
 Author URI: http://slimndap.com/
 Text Domain: wp_theatre
 Domain Path: /lang
@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
  *	echo $wp_theatre->events->html_listing($args); // a list of all upcoming events, paginated by month
  */
 
-$wpt_version = '0.7.3';
+$wpt_version = '0.7.4';
 
 class WP_Theatre {
 	function __construct() {
@@ -72,22 +72,7 @@ class WP_Theatre {
 		// Loaded action
 		do_action( 'wpt_loaded' );
 	}
-	
-	/**
-	 * Enable magic __invoke function in child classes.
-	 * See: http://stackoverflow.com/a/3108130/1153764
-	 *
-	 * Example:
-	 * $events = $wp_theatre->events();
-	 *
-	 */
-	public function __call($method, $args) {
-		if(property_exists($this, $method)) {
-		    $prop = $this->$method;
-		    return call_user_func_array($this->$method,$args);
-		}
-	}
-	
+		
 	/**
 	 * Include required core files used in admin and on the frontend.
 	 *
@@ -95,25 +80,25 @@ class WP_Theatre {
 	 * @return void
 	 */
 	function includes() {
-		require_once(__DIR__ . '/functions/wpt_listing.php');
-		require_once(__DIR__ . '/functions/wpt_production.php');
-		require_once(__DIR__ . '/functions/wpt_productions.php');
-		require_once(__DIR__ . '/functions/wpt_event.php');
-		require_once(__DIR__ . '/functions/wpt_events.php');
-		require_once(__DIR__ . '/functions/wpt_setup.php');
-		require_once(__DIR__ . '/functions/wpt_season.php');
-		require_once(__DIR__ . '/functions/wpt_widget.php');
-		require_once(__DIR__ . '/functions/wpt_admin.php');
-		require_once(__DIR__ . '/functions/wpt_order.php');
-		require_once(__DIR__ . '/functions/wpt_feeds.php');	
-		require_once(__DIR__ . '/functions/wpt_transient.php');	
+		require_once(dirname(__FILE__) . '/functions/wpt_listing.php');
+		require_once(dirname(__FILE__) . '/functions/wpt_production.php');
+		require_once(dirname(__FILE__) . '/functions/wpt_productions.php');
+		require_once(dirname(__FILE__) . '/functions/wpt_event.php');
+		require_once(dirname(__FILE__) . '/functions/wpt_events.php');
+		require_once(dirname(__FILE__) . '/functions/wpt_setup.php');
+		require_once(dirname(__FILE__) . '/functions/wpt_season.php');
+		require_once(dirname(__FILE__) . '/functions/wpt_widget.php');
+		require_once(dirname(__FILE__) . '/functions/wpt_admin.php');
+		require_once(dirname(__FILE__) . '/functions/wpt_order.php');
+		require_once(dirname(__FILE__) . '/functions/wpt_feeds.php');	
+		require_once(dirname(__FILE__) . '/functions/wpt_transient.php');	
 		if (is_admin()) {
 		} else {
-			require_once(__DIR__ . '/functions/wpt_frontend.php');
-			require_once(__DIR__ . '/functions/wpt_cart.php');	
+			require_once(dirname(__FILE__) . '/functions/wpt_frontend.php');
+			require_once(dirname(__FILE__) . '/functions/wpt_cart.php');	
 		}
-		require_once(__DIR__ . '/integrations/wordpress-seo.php');
-		require_once(__DIR__ . '/integrations/jetpack-featured-content.php');
+		require_once(dirname(__FILE__) . '/integrations/wordpress-seo.php');
+		require_once(dirname(__FILE__) . '/integrations/jetpack-featured-content.php');
 		
 	}
 	

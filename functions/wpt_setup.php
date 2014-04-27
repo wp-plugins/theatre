@@ -8,11 +8,7 @@
 			add_action( 'init', array($this,'init'));
 			add_filter( 'gettext', array($this,'gettext'), 20, 3 );
 			
-			add_action( 'widgets_init', function(){
-			     register_widget( 'WPT_Events_Widget' );
-			     register_widget( 'WPT_Productions_Widget' );
-			     register_widget( 'WPT_Cart_Widget' );
-			});
+			add_action( 'widgets_init', array($this,'widgets_init'));
 			
 			add_action( 'plugins_loaded', array($this,'plugins_loaded'));
 			
@@ -188,6 +184,12 @@
 			}
 		}
 		
+		function widgets_init() {
+		     register_widget( 'WPT_Events_Widget' );
+		     register_widget( 'WPT_Productions_Widget' );
+		     register_widget( 'WPT_Cart_Widget' );			
+		}
+		
 		/**
 		 * Trash all connected events of a production.
 		 *
@@ -204,7 +206,7 @@
 					'status' => 'any',
 					'production' => $post_id
 				);
-				$events = $wp_theatre->events($args);
+				$events = $wp_theatre->events->load($args);
 				foreach ($events as $event) {
 					wp_trash_post($event->ID);
 				}							
@@ -267,7 +269,7 @@
 					$args = array(
 						'production'=>$post->ID
 					);
-					$events = $wp_theatre->events($args);
+					$events = $wp_theatre->events->load($args);
 					foreach($events as $event) {
 						update_post_meta($event->ID, WPT_Season::post_type_name, $meta_value);
 					}

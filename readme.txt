@@ -1,6 +1,6 @@
 === Theater ===
 Contributors: slimndap
-Tags: theatre, stage, venue, events, shows, concerts, tickets, ticketing, sports, performances, calendar, workshops, theater, cinema
+Tags: theatre, stage, venue, events, shows, concerts, tickets, ticketing, sports, performances, calendar, workshops, theater, cinema, film, artist, musician
 Requires at least: 3.8
 Tested up to: 3.9
 Stable tag: trunk
@@ -66,9 +66,9 @@ If you are missing a feature that you really need for your website you can:
 
 1. submit a feature request on the [forum](http://wordpress.org/support/plugin/theatre) or
 1. add it yourself and submit a pull request on [GitHub](https://github.com/slimndap/wp-theatre) or
-1. [hire me](mailto:jeroen@slimndap.com).
+1. [hire me](mailto:jeroen@slimndap.com) to do it for you.
 
-The new feature may be added directly to the Theater plugin or as an extension so that others may benefit from this as well.
+The new feature may be added directly to the Theater plugin or as an extension so that others can benefit from it as well.
 
 == Changelog ==
 

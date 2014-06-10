@@ -1,6 +1,6 @@
 === Theater ===
 Contributors: slimndap
-Tags: theatre, stage, venue, events, shows, concerts, tickets, ticketing, sports, performances, calendar, workshops, theater, cinema, film, artist, musician
+Tags: theatre, stage, venue, events, shows, concerts, tickets, ticketing, sports, performances, calendar, workshops, theater, cinema
 Requires at least: 3.8
 Tested up to: 3.9
 Stable tag: trunk
@@ -60,22 +60,12 @@ __All event listings look really weird!__
 
 Make sure that you checked the 'Enable built-in Theater stylesheet'-option in the Theater plugin settings.
 
-__I really need feature X. Can you add it?__
-
-If you are missing a feature that you really need for your website you can:
-
-1. submit a feature request on the [forum](http://wordpress.org/support/plugin/theatre) or
-1. add it yourself and submit a pull request on [GitHub](https://github.com/slimndap/wp-theatre) or
-1. [hire me](mailto:jeroen@slimndap.com) to do it for you.
-
-The new feature may be added directly to the Theater plugin or as an extension so that others can benefit from it as well.
-
 == Changelog ==
 
 = 0.7 =
 * Support for tickets prices, cancelled events.
 * Filter listings by season or categories. See the [documentation](https://github.com/slimndap/wp-theatre/wiki/Shortcodes).
-* A new German translation (by [pixelfis.ch](http://pixelfis.ch)).
+* A new German translation (by Gregory Fischer).
 * Wordpress SEO by Yoast support.
 * Jetpack Featured Content slider support.
 * And [more...](http://slimndap.com/theatre-for-wordpress-0-7-prices-and-categories)
@@ -166,6 +156,9 @@ The new feature may be added directly to the Theater plugin or as an extension s
 * Basic version of the plugin.
 
 == Upgrade Notice ==
+= 0.7.7 =
+* Bugfix: tickets button was sometimes showing a plain URL.
+
 = 0.7.6 =
 * Fixed sticky productions showing up in the wrong places.
 

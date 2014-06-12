@@ -22,7 +22,7 @@ class WPT_Productions extends WPT_Listing {
 			$post_categories = wp_get_post_categories( $production->ID );
 			foreach($post_categories as $c){
 				$cat = get_category( $c );
-				$categories[$cat->slug] = $cat->name;
+				$categories[$cat->term_id] = $cat->name;
 			}
 		}
 		asort($categories);
@@ -66,7 +66,7 @@ class WPT_Productions extends WPT_Listing {
  	 * @return string HTML.
 	 */
 	public function html($args=array()) {
-		global $wpdb;
+		global $wp_query;
 
 		$defaults = array(
 			'limit' => false,
@@ -87,8 +87,7 @@ class WPT_Productions extends WPT_Listing {
 			'upcoming' => $args['upcoming']
 		);
 
-		$classes = array();
-		$classes[] = "wpt_productions";
+		$classes = array('wpt_listing','wpt_productions');
 
 		// Thumbnail
 		if (!empty($args['template']) && strpos($args['template'],'{{thumbnail}}')===false) { 
@@ -125,43 +124,23 @@ class WPT_Productions extends WPT_Listing {
 			$html.= '</nav>';
 		}
 
-		if (in_array('category',$args['paginateby'])) {
-			$categories = $this->categories();
-
-			$page = '';
-			if (!empty($_GET[__('category','wp_theatre')])) {
-				if ($category = get_category_by_slug($_GET[__('category','wp_theatre')])) {
-		  			$filters['category'] = $category->term_id;				
-				}
-			}
-			
-			$html.= '<nav class="wpt_event_categories">';
-
-			$html.= '<span>';
-			if (empty($filters['category'])) {
-				$html.= __('All','wp_theatre').' '.__('categories','wp_theatre');
-			} else {				
-				$url = remove_query_arg(__('category','wp_theatre'));
-				$html.= '<a href="'.$url.'">'.__('All','wp_theatre').' '.__('categories','wp_theatre').'</a>';
-			}
-			$html.= '</span>';
-			
-			foreach($categories as $slug=>$name) {
-				$url = remove_query_arg(__('category','wp_theatre'));
-				$url = add_query_arg( __('category','wp_theatre'), $slug , $url);
-				$html.= '<span>';
-				
-				if ($slug != $_GET[__('category','wp_theatre')]) {
-					$html.= '<a href="'.$url.'">'.$name.'</a>';
-				} else {
-					$html.= $name;
-					
-				}
-				$html.= '</span>';
-			}
-			$html.= '</nav>';
+		/*
+		 * Categories navigation
+		 */
+		$html.= $this->filter_pagination('category', $this->categories($filters), $args);
+		
+		/*
+		 * No stickies in filtered, paginated or grouped views
+		 */
+		if (
+			!empty($args['paginateby']) || 
+			!empty($args['groupby']) ||
+			!empty($args['category']) ||
+			!empty($args['season'])
+		) {
+			$filters['ignore_sticky_posts'] = true;	
 		}
-
+		
 		$production_args = array();
 		if (isset($args['template'])) { $production_args['template'] = $args['template']; }
 
@@ -169,12 +148,11 @@ class WPT_Productions extends WPT_Listing {
 			case 'season':
 				if (!in_array('season', $args['paginateby'])) {
 					$seasons = $this->seasons();
-					$filters['ignore_sticky_posts'] = true;
 					foreach($seasons as  $title=>$season) {
 						$filters['season'] = $season->ID;
 						$productions = $this->get($filters);
 						if (!empty($productions)) {
-							$html.= '<h3>'.$season->title().'</h3>';
+							$html.= '<h3 class="wpt_listing_group season">'.$season->title().'</h3>';
 							foreach ($productions as $production) {
 								$html.=$production->html($production_args);							
 							}
@@ -185,14 +163,13 @@ class WPT_Productions extends WPT_Listing {
 			case 'category':
 				if (!in_array('category', $args['paginateby'])) {
 					$categories = $this->categories();
-					$filters['ignore_sticky_posts'] = true;
 					foreach($categories as $slug=>$name) {
 						if ($category = get_category_by_slug($slug)) {
 				  			$filters['category'] = $category->term_id;				
 						}
 						$productions = $this->get($filters);
 						if (!empty($productions)) {
-							$html.= '<h3>'.$name.'</h3>';
+							$html.= '<h3 class="wpt_listing_group category">'.$name.'</h3>';
 							foreach ($productions as $production) {
 								$html.=$production->html($production_args);							
 							}							
@@ -261,9 +238,13 @@ class WPT_Productions extends WPT_Listing {
 		
 		if ($filters['limit']) {
 			$args['posts_per_page'] = $filters['limit'];
+		} elseif (
+			!$filters['season'] &&
+			!$filters['category']
+		) { 
+			$args['posts_per_page'] = get_option('posts_per_page');		
 		} else {
 			$args['posts_per_page'] = -1;
-			
 		}
 
 		if ($filters['upcoming']) {
@@ -273,6 +254,7 @@ class WPT_Productions extends WPT_Listing {
 				'compare' => '>='
 			);
 		}
+
 		$posts = get_posts($args);
 
 		// don't forget the stickies!

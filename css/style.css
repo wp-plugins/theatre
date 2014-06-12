@@ -1,11 +1,67 @@
-.wpt_productions,
-.wpt_events {
+.wpt_listing {
   margin-bottom: 1em;
 }
-.wpt_productions nav span,
-.wpt_events nav span {
-  padding-right: 0.5em;
-  font-size: 0.875em;
+.wpt_listing_filter_pagination .wpt_listing_filter {
+  padding: 0;
+  margin-right: .25em;
+  white-space: nowrap;
+}
+.wpt_listing_filter_pagination .wpt_listing_filter.wpt_listing_filter_active {
+  background-color: rgba(0, 0, 0, 0.1);
+  font-weight: bold;
+  padding: 0 .5em;
+}
+.wpt_listing_filter_pagination .wpt_listing_filter.wpt_listing_filter_active a {
+  color: inherit;
+  text-decoration: none;
+}
+.wpt_listing_filter_pagination .wpt_listing_filter.wpt_listing_filter_active a:after {
+  content: '\00D7';
+  padding: 0 0 0 0.5em;
+  opacity: .5;
+}
+.wpt_listing_filter_pagination .wpt_listing_filter.wpt_listing_filter_active a:hover:after {
+  opacity: 1;
+}
+.wpt_calendar.navigate .wpt_month:first-child {
+  display: none;
+}
+.wpt_calendar.navigate .wpt_month.active {
+  display: table;
+}
+.wpt_calendar .wpt_month {
+  line-height: 2em;
+  display: none;
+  top: 0;
+  left: 0;
+}
+.wpt_calendar .wpt_month:first-child {
+  display: table;
+}
+.wpt_calendar .wpt_month thead tr th {
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.02);
+  text-transform: uppercase;
+}
+.wpt_calendar .wpt_month tfoot tr .prev {
+  text-align: left;
+  padding-left: 5px;
+}
+.wpt_calendar .wpt_month tfoot tr .next {
+  text-align: right;
+  padding-right: 5px;
+}
+.wpt_calendar .wpt_month tr {
+  overflow: auto;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+.wpt_calendar .wpt_month tr td {
+  text-align: center;
+}
+.wpt_calendar .wpt_month tr td.trailing {
+  color: rgba(0, 0, 0, 0.1);
 }
 .wpt_productions.wpt_events_without_thumbnail .wp_theatre_event > *,
 .wpt_events.wpt_events_without_thumbnail .wp_theatre_event > *,

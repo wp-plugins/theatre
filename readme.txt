@@ -1,4 +1,4 @@
-=== Theater ===
+=== Theater for WordPress ===
 Contributors: slimndap
 Tags: theatre, stage, venue, events, shows, concerts, tickets, ticketing, sports, performances, calendar, workshops, theater, cinema
 Requires at least: 3.8
@@ -7,10 +7,10 @@ Stable tag: trunk
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Add events to your Wordpress website. Build a website for your theater, music venue, sports team, cinema or your rockband!
+Build a website for your theater, music venue, sports team, cinema or your rockband! Add upcoming events and ticketing to your WordPress website. 
 
 == Description ==
-This plugin gives you the ability to manage seasons, productions and events in Wordpress and comes with all necessary shortcodes and widgets to show your events on your website.
+A WordPress plugin to manage events with all necessary shortcodes and widgets for your theater.
 
 __Shortcodes__
 
@@ -18,7 +18,7 @@ Theater comes with several shortcodes and widgets to show off your events. See t
 
 __Available add-ons__
 
-* [Ticketmatic](http://slimndap.com/product/ticketmatic-voor-wordpress/)
+* [Ticketmatic](http://slimndap.com/product/ticketmatic-for-wordpress/)
 
 __Missing features?__
 
@@ -60,12 +60,41 @@ __All event listings look really weird!__
 
 Make sure that you checked the 'Enable built-in Theater stylesheet'-option in the Theater plugin settings.
 
+__I don't see the Theater Calendar widget__
+
+Make sure that you select a page to show your event listings on in the Theater plugin settings.
+
+__I don't see the Theater Categories widget__
+
+Make sure that you select a page to show your event listings on in the Theater plugin settings.
+
+__I really need feature X. Can you add it?__
+
+If you are missing a feature that you really need for your website you can:
+
+1. submit a feature request on the [forum](http://wordpress.org/support/plugin/theatre) or
+1. add it yourself and submit a pull request on [GitHub](https://github.com/slimndap/wp-theatre) or
+1. [hire me](mailto:jeroen@slimndap.com).
+
+The new feature may be added directly to the Theater plugin or as an extension so that others may benefit from this as well.
+
 == Changelog ==
+
+= 0.8 =
+* New Theater Calendar widget with upcoming events.
+* New calendar shortcode: [wpt_calendar].
+* New Theater Categories widget with a list of all categories with upcoming events.
+* Dedicated event listing page (with pretty URLs). No shortcode needed!
+* Day grouping and pagination for event listings. Very useful for cinema websites.
+* Support for custom fields in shortcode templates. Thanks [ydbondt](https://github.com/ydbondt).
+* [wpt_production_events] now supports a production ID if used outside of a production detail page: [wpt_production_events production=123].
+* Rearranged settings screen.
+* Updated Dutch and German (by [pixelfis.ch](http://pixelfis.ch)) translations.
 
 = 0.7 =
 * Support for tickets prices, cancelled events.
 * Filter listings by season or categories. See the [documentation](https://github.com/slimndap/wp-theatre/wiki/Shortcodes).
-* A new German translation (by Gregory Fischer).
+* A new German translation (by [pixelfis.ch](http://pixelfis.ch)).
 * Wordpress SEO by Yoast support.
 * Jetpack Featured Content slider support.
 * And [more...](http://slimndap.com/theatre-for-wordpress-0-7-prices-and-categories)
@@ -156,8 +185,8 @@ Make sure that you checked the 'Enable built-in Theater stylesheet'-option in th
 * Basic version of the plugin.
 
 == Upgrade Notice ==
-= 0.7.7 =
-* Bugfix: tickets button was sometimes showing a plain URL.
+= 0.8 =
+* Major update. Always backup before you upgrade!
 
 = 0.7.6 =
 * Fixed sticky productions showing up in the wrong places.

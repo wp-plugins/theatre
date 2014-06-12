@@ -1,4 +1,5 @@
 <?php
+
 	class WPT_Events_Widget extends WP_Widget {
 		function __construct() {
 			parent::__construct(
@@ -10,6 +11,7 @@
 	
 		public function widget( $args, $instance ) {
 			global $wp_theatre;
+			
 			$title = apply_filters( 'widget_title', $instance['title'] );
 			
 			echo $args['before_widget'];
@@ -24,11 +26,11 @@
 				$filters['template'] = $instance['template'];
 			}
 
-			$transient_key = 'wpt_events_'.md5(serialize($filters));
-			if ( ! ( $html = get_transient($transient_key) ) ) {
+			if ( ! ( $html = $wp_theatre->transient->get('e', array_merge($filters)) ) ) {
 				$html = $wp_theatre->events->html($filters);
-				set_transient($transient_key, $html, 4 * MINUTE_IN_SECONDS );
+				$wp_theatre->transient->set('e', array_merge($filters), $html);
 			}
+
 			echo $html;
 
 			echo $args['after_widget'];

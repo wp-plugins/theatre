@@ -4,7 +4,7 @@ Plugin Name: Theater
 Plugin URI: http://wordpress.org/plugins/theatre/
 Description: Turn your Wordpress website into a theater website.
 Author: Jeroen Schmit, Slim & Dapper
-Version: 0.7.7
+Version: 0.8
 Author URI: http://slimndap.com/
 Text Domain: wp_theatre
 Domain Path: /lang
@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
  *	echo $wp_theatre->events->html_listing($args); // a list of all upcoming events, paginated by month
  */
 
-$wpt_version = '0.7.7';
+$wpt_version = '0.8';
 
 class WP_Theatre {
 	function __construct() {
@@ -45,6 +45,8 @@ class WP_Theatre {
 		$this->order = new WPT_Order();
 		$this->feeds = new WPT_Feeds();
 		$this->transient = new WPT_Transient();
+		$this->listing_page = new WPT_Listing_Page();
+		$this->calendar = new WPT_Calendar();
 		if (is_admin()) {
 		} else {
 			$this->frontend = new WPT_Frontend();
@@ -52,10 +54,12 @@ class WP_Theatre {
 		}
 		
 		// Options
-		$this->options = get_option( 'wp_theatre' );
-		$this->wpt_social_options = get_option( 'wpt_social' );
 		$this->wpt_language_options = get_option( 'wpt_language' );
-
+		$this->wpt_listing_page_options = get_option( 'wpt_listing_page' );
+		$this->wpt_style_options = get_option( 'wpt_style' );
+		$this->wpt_tickets_options = get_option( 'wpt_tickets' );
+		$this->deprecated_options();
+		
 		// Hooks
 		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this->setup, 'plugin_action_links' ) );
 
@@ -92,6 +96,8 @@ class WP_Theatre {
 		require_once(dirname(__FILE__) . '/functions/wpt_order.php');
 		require_once(dirname(__FILE__) . '/functions/wpt_feeds.php');	
 		require_once(dirname(__FILE__) . '/functions/wpt_transient.php');	
+		require_once(dirname(__FILE__) . '/functions/wpt_listing_page.php');	
+		require_once(dirname(__FILE__) . '/functions/wpt_calendar.php');	
 		if (is_admin()) {
 		} else {
 			require_once(dirname(__FILE__) . '/functions/wpt_frontend.php');
@@ -172,6 +178,20 @@ class WP_Theatre {
 		return $this->productions->html_listing();
 	}
 
+ 	/*
+ 	 * For backward compatibility purposes
+ 	 * Use old theatre options for style options and tickets options.
+ 	 * As of v0.8 style options and tickets options are stored seperately.
+ 	 */
+ 	
+ 	function deprecated_options() {
+	 	if (empty($this->wpt_style_options)) {
+		 	$this->wpt_style_options = get_option( 'wp_theatre' );
+	 	}
+	 	if (empty($this->wpt_tickets_options)) {
+		 	$this->wpt_tickets_options = get_option( 'wp_theatre' );
+	 	}
+ 	}
 }
 
 /**

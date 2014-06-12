@@ -14,7 +14,7 @@ class WPT_Events extends WPT_Listing {
 			$post_categories = wp_get_post_categories( $event->production()->ID );
 			foreach($post_categories as $c){
 				$cat = get_category( $c );
-				$categories[$cat->slug] = $cat->name;
+				$categories[$cat->term_id] = $cat->name;
 			}
 		}
 		asort($categories);
@@ -23,11 +23,29 @@ class WPT_Events extends WPT_Listing {
 		
 	}
 	
+	/**
+	 * An array of all days with upcoming events.
+	 * @since 0.8
+	 */
+	function days($filters=array()) {
+		// get all event according to remaining filters
+		$filters['day'] = false;
+		$events = $this->load($filters);		
+		$days = array();
+		foreach ($events as $event) {
+			$days[date('Y-m-d',$event->datetime())] = date_i18n('D j M',$event->datetime());
+		}
+		ksort($days);
+
+		return $days;
+	}
+	
 	function defaults() {
 		return array(
 			'limit' => false,
 			'upcoming' => false,
 			'past' => false,
+			'day' => false,
 			'month' => false,
 			'category' => false,
 			'season' => false,
@@ -35,6 +53,7 @@ class WPT_Events extends WPT_Listing {
 			'status' => array('publish')
 		);
 	}
+	
 	
 	/**
 	 * A list of upcoming events in HTML.
@@ -57,7 +76,7 @@ class WPT_Events extends WPT_Listing {
 	 */
 	public function html($args=array()) {
 		global $wp_theatre;
-	
+
 		$defaults = array(
 			'paginateby' => array(),
 			'groupby'=>false,
@@ -65,133 +84,75 @@ class WPT_Events extends WPT_Listing {
 			'season' => false,
 			'limit' => false,
 			'category' => false,
+			'month' => false,
+			'day' => false,
 			'template' => NULL
 		);
-		$args = wp_parse_args( $args, $defaults );
+		$args = wp_parse_args($args, $defaults );
 
-		$classes = array();
-		$classes[] = "wpt_events";
+		$classes = array('wpt_listing','wpt_events');
 
 		// Thumbnail
 		if (!empty($args['template']) && strpos($args['template'],'{{thumbnail}}')===false) { 
 			$classes[] = 'wpt_events_without_thumbnail';
 		}
 
-		$html = '';
-
 		$filters = array(
 			'upcoming' => true,
 			'production' => $args['production'],
 			'limit' => $args['limit'],
 			'category' => $args['category'],
+			'month' => $args['month'],
+			'day' => $args['day'],
 			'season' => $args['season']
 		);
 
-		if (in_array('month',$args['paginateby'])) {
-			$months = $this->months($filters);
-			if (!empty($months)) {
-				if (!empty($_GET[__('month','wp_theatre')])) {
-					$filters['month'] = $_GET[__('month','wp_theatre')];
-				} else {
-					$filters['month'] = $months[0];
-				}				
-			}
+		$html = '';
 
-			$html.= '<nav class="wpt_event_months">';
-			foreach($months as $month) {
-				$url = remove_query_arg(__('month','wp_theatre'));
-				$url = add_query_arg( __('month','wp_theatre'), sanitize_title($month) , $url);
-				$html.= '<span>';
-				
-				$title = date_i18n('M Y',strtotime($month));
-				if (sanitize_title($month) != $filters['month']) {
-					$html.= '<a href="'.$url.'">'.$title.'</a>';
-				} else {
-					$html.= $title;
-					
-				}
-				$html.= '</span>';
-			}
-			$html.= '</nav>';
-		}
-	
-		if (in_array('category',$args['paginateby'])) {
-			$categories = $this->categories($filters);
+		/*
+		 * Days navigation
+		 */
+		$html.= $this->filter_pagination('day', $this->days($filters), $args);
 
-			if (!empty($_GET[__('category','wp_theatre')])) {
-				if ($category = get_category_by_slug($_GET[__('category','wp_theatre')])) {
-		  			$filters['category'] = $category->term_id;				
-				}
-			}
-			
-			$html.= '<nav class="wpt_event_categories">';
+		/*
+		 * Months navigation
+		 */
+		$html.= $this->filter_pagination('month', $this->months($filters), $args);
 
-			$html.= '<span>';
-			if (empty($filters['category'])) {
-				$html.= __('All','wp_theatre').' '.__('categories','wp_theatre');
-			} else {				
-				$url = remove_query_arg(__('category','wp_theatre'));
-				$html.= '<a href="'.$url.'">'.__('All','wp_theatre').' '.__('categories','wp_theatre').'</a>';
-			}
-			$html.= '</span>';
-			
-			foreach($categories as $slug=>$name) {
-				$url = remove_query_arg(__('category','wp_theatre'));
-				$url = add_query_arg( __('category','wp_theatre'), $slug , $url);
-				$html.= '<span>';
-				if (empty($_GET[__('category','wp_theatre')]) || $slug != $_GET[__('category','wp_theatre')]) {
-					$html.= '<a href="'.$url.'">'.$name.'</a>';
-				} else {
-					$html.= $name;
-					
-				}
-				$html.= '</span>';
-			}
-			$html.= '</nav>';
-		}
-
-		if (in_array('season',$args['paginateby'])) {
-			$seasons = $wp_theatre->productions->seasons();
-
-			if (!empty($_GET[__('season','wp_theatre')])) {
-				$filters['season'] = $_GET[__('season','wp_theatre')];
-			} else {
-				$slugs = array_keys($seasons);
-				$filters['season'] = $slugs[0];				
-			}
-
-			$html.= '<nav>';
-			foreach($seasons as $slug=>$season) {
-
-				$url = remove_query_arg(__('season','wp_theatre'));
-				$url = add_query_arg( __('season','wp_theatre'), $slug , $url);
-				$html.= '<span>';
-
-				$title = $season->title();
-				if ($slug == $filters['season']) {
-					$html.= $title;
-				} else {
-					$html.= '<a href="'.$url.'">'.$title.'</a>';					
-				}
-				$html.= '</span>';
-			}
-			$html.= '</nav>';
-		}
-
+		/*
+		 * Categories navigation
+		 */
+		$html.= $this->filter_pagination('category', $this->categories($filters), $args);
 
 		$event_args = array();
-		if (isset($args['template'])) { $event_args['template'] = $args['template']; }
-
+		if (!empty($args['template'])) {
+			$event_args['template'] = $args['template']; 
+		}
 		
 		switch ($args['groupby']) {
+			case 'day':
+				if (!in_array('day', $args['paginateby'])) {
+					$days = $this->days($filters);
+					foreach($days as $day=>$name) {
+						$filters['day'] = $day;
+						$events = $this->get($filters);
+						if (!empty($events)) {
+							$html.= '<h3 class="wpt_listing_group day">'.date_i18n('l d F',strtotime($day)).'</h3>';
+							foreach ($events as $event) {
+								$html.=$event->html($event_args);							
+							}
+						}
+					}
+					break;					
+				}
 			case 'month':
 				if (!in_array('month', $args['paginateby'])) {
 					$months = $this->months($filters);
-					foreach($months as $month) {
+					foreach($months as $month=>$name) {
 						$filters['month'] = $month;
 						$events = $this->get($filters);
 						if (!empty($events)) {
-							$html.= '<h3>'.date_i18n('F',strtotime($month)).'</h3>';
+							$html.= '<h3 class="wpt_listing_group month">'.date_i18n('F',strtotime($month)).'</h3>';
 							foreach ($events as $event) {
 								$html.=$event->html($event_args);							
 							}
@@ -208,7 +169,7 @@ class WPT_Events extends WPT_Listing {
 						}
 						$events = $this->get($filters);
 						if (!empty($events)) {
-							$html.= '<h3>'.$name.'</h3>';
+							$html.= '<h3 class="wpt_listing_group category">'.$name.'</h3>';
 							foreach ($events as $event) {
 								$html.=$event->html($event_args);							
 							}							
@@ -229,6 +190,29 @@ class WPT_Events extends WPT_Listing {
 		return $html;
 	}
 	
+	/* 
+	 * Get the last event.
+	 *
+	 * @since 0.8
+	 */
+	
+	function last() {
+		$args = array(
+			'post_type' => WPT_Event::post_type_name,
+			'post_status' => 'publish',
+			'order' => 'desc',
+			'posts_per_page' => 1
+		);
+		
+		$events = get_posts($args);
+		
+		if (empty($events)) {
+			return false;
+		} else {
+			return new WPT_Event($events[0]);
+		}
+	}
+	
 	/**
 	 * Setup the current selection of events.
 	 * 
@@ -236,6 +220,7 @@ class WPT_Events extends WPT_Listing {
 	 *
  	 * @return array Events.
 	 */
+	 
 	function load($filters=array()) {
 		global $wpdb;
 		global $wp_theatre;
@@ -272,6 +257,14 @@ class WPT_Events extends WPT_Listing {
 			);
 		}
 
+		if ($filters['day']) {
+			$args['meta_query'][] = array (
+				'key' => 'event_date',
+				'value' => $filters['day'],
+				'compare' => 'LIKE'
+			);
+		}
+
 		if ($filters['season']) {
 			$args['meta_query'][] = array (
 				'key' => WPT_Season::post_type_name,
@@ -286,12 +279,19 @@ class WPT_Events extends WPT_Listing {
 		
 		if ($filters['limit']) {
 			$args['posts_per_page'] = $filters['limit'];
-		} else {
+		} elseif (
+			!$filters['production'] &&
+			!$filters['month'] &&
+			!$filters['day'] &&
+			!$filters['season']
+		) {
+			$args['posts_per_page'] = get_option('posts_per_page');
+		} else {	
 			$args['posts_per_page'] = -1;
-			
 		}
 
 		$posts = get_posts($args);
+
 		$events = array();
 		for ($i=0;$i<count($posts);$i++) {
 			$key = $posts[$i]->ID;
@@ -312,10 +312,9 @@ class WPT_Events extends WPT_Listing {
 		$events = $this->load($filters);		
 		$months = array();
 		foreach ($events as $event) {
-			$months[] = date('Y-m',$event->datetime());
+			$months[date('Y-m',$event->datetime())] = date_i18n('M Y',$event->datetime());
 		}
-		$months = array_unique($months);
-		sort($months);
+		ksort($months);
 
 		return $months;
 	}

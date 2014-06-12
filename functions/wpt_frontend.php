@@ -33,12 +33,15 @@ class WPT_Frontend {
 		wp_enqueue_script( 'wp_theatre_js', plugins_url( '../js/main.js', __FILE__ ), array('jquery'), $wpt_version );
 
 		// Add built-in Theatre stylesheet
-		if (!empty($wp_theatre->options['stylesheet'])) {
+		if (!empty($wp_theatre->wpt_style_options['stylesheet'])) {
 			wp_enqueue_style( 'wp_theatre', plugins_url( '../css/style.css', __FILE__ ), null, $wpt_version );
 		}
 
 		// Add Thickbox files
-		if (!empty($wp_theatre->options['integrationtype']) && $wp_theatre->options['integrationtype']=='lightbox') {
+		if (
+			!empty($wp_theatre->wpt_tickets_options['integrationtype']) && 
+			$wp_theatre->wpt_tickets_options['integrationtype']=='lightbox'
+		) {
 			wp_enqueue_script('thickbox');
 			wp_enqueue_style('thickbox', includes_url('/js/thickbox/thickbox.css'), null, $wpt_version);			
 		}
@@ -50,15 +53,15 @@ class WPT_Frontend {
 		
 		$html = array();
 		
-		$html[] = '<meta name="generator" content="Theatre '.$wpt_version.'" />';
+		$html[] = '<meta name="generator" content="Theater '.$wpt_version.'" />';
 
-		if (!empty($wp_theatre->options['custom_css'])) {
-			$html[].= '<!-- Custom Theatre CSS -->';
+		if (!empty($wp_theatre->wpt_style_options['custom_css'])) {
+			$html[].= '<!-- Custom Theater CSS -->';
 			$html[].= '<style>';
-			$html[].= $wp_theatre->options['custom_css'];
+			$html[].= $wp_theatre->wpt_style_options['custom_css'];
 			$html[].= '</style>';
+		}
 		
-		}		
 		echo implode("\n",$html)."\n";
 	}
 	
@@ -80,25 +83,6 @@ class WPT_Frontend {
 
 	function the_content($content) {
 		global $wp_theatre;
-		
-		if (is_singular(WPT_Production::post_type_name)) {
-			if (
-				isset( $wp_theatre->options['show_events'] ) &&
-				in_array($wp_theatre->options['show_events'], array('above','below'))
-			) {
-				$production = new WPT_Production();			
-				$events_html = '<h3>'.WPT_Event::post_type()->labels->name.'</h3>';
-				$events_html.= '[wpt_production_events]{{remark}} {{datetime}} {{location}} {{tickets}}[/wpt_production_events]';
-				
-				switch ($wp_theatre->options['show_events']) {
-					case 'above' :
-						$content = $events_html.$content;
-						break;
-					case 'below' :
-						$content.= $events_html;
-				}
-			}
-		}
 		
 		if (is_singular(WPT_Production::post_type_name)) {
 			if (
@@ -138,16 +122,49 @@ class WPT_Frontend {
 
 	function wpt_events($atts, $content=null) {
 		global $wp_theatre;
+		global $wp_query;
 		
-		$atts = shortcode_atts( array(
+		$defaults = array(
 			'upcoming' => true,
 			'past' => false,
 			'paginateby'=>array(),
 			'category'=> false,
+			'day' => false,
+			'month' => false,
 			'season'=> false,
 			'groupby'=>false,
 			'limit'=>false
-		), $atts );
+		);
+		
+		if (!empty($wp_query->query_vars['wpt_category'])) {
+			$defaults['category']=$wp_query->query_vars['wpt_category'];
+		} else {
+			/*
+			 * For backward compatibility purposes.
+			 * Before v0.8 $_GET[__('category','wp_theatre')] was used for the category filter.
+			 */
+			if(!empty($_GET[__('category','wp_theatre')])) {
+				$defaults['category']=$_GET[__('category','wp_theatre')];
+			}
+		}
+
+		if (!empty($wp_query->query_vars['wpt_day'])) {
+			$defaults['day']=$wp_query->query_vars['wpt_day'];
+		}
+		
+		if (!empty($wp_query->query_vars['wpt_month'])) {
+			$defaults['month']=$wp_query->query_vars['wpt_month'];
+		} else {
+			/*
+			 * For backward compatibility purposes.
+			 * Before v0.8 $_GET[__('month','wp_theatre')] was used for the category filter.
+			 */
+			if(!empty($_GET[__('month','wp_theatre')])) {
+				$defaults['month']=$_GET[__('month','wp_theatre')];
+			}
+		}
+		
+		$atts = shortcode_atts( $defaults, $atts );
 				
 		if (!empty($atts['paginateby'])) {
 			$fields = explode(',',$atts['paginateby']);
@@ -178,26 +195,40 @@ class WPT_Frontend {
 		}
 
 		$wp_theatre->events->filters['upcoming'] = true;
-		
-		if ( ! ( $html = $wp_theatre->transient->get('events', array_merge($atts, $_GET)) ) ) {
-			$html = $wp_theatre->events->html($atts);
-			$wp_theatre->transient->set('events', array_merge($atts, $_GET), $html);
-		}
 
+		if ( ! ( $html = $wp_theatre->transient->get('e', array_merge($atts, $_GET)) ) ) {
+			$html = $wp_theatre->events->html($atts);
+			$wp_theatre->transient->set('e', array_merge($atts, $_GET), $html);
+		}
 		return $html;
 	}
 
 	function wpt_productions($atts, $content=null) {
 		global $wp_theatre;
+		global $wp_query;
 		
-		$atts = shortcode_atts( array(
+		$defaults = array(
 			'paginateby' => array(),
 			'upcoming' => false,
 			'season'=> false,
 			'category'=> false,
 			'groupby'=>false,
 			'limit'=>false
-		), $atts );
+		);
+				
+		if (!empty($wp_query->query_vars['wpt_category'])) {
+			$defaults['category']=$wp_query->query_vars['wpt_category'];
+		} else {
+			/*
+			 * For backward compatibility purposes.
+			 * Before v0.8 $_GET[__('category','wp_theatre')] was used for the category filter.
+			 */
+			if(!empty($_GET[__('category','wp_theatre')])) {
+				$defaults['category']=$_GET[__('category','wp_theatre')];
+			}
+		}
+
+		$atts = shortcode_atts($defaults,$atts);
 				
 		if (!empty($atts['paginateby'])) {
 			$fields = explode(',',$atts['paginateby']);
@@ -223,15 +254,13 @@ class WPT_Frontend {
 			$atts['category'] = implode(',',$categories);
 		}
 		
-		
-		
 		if (!is_null($content) && !empty($content)) {
 			$atts['template'] = html_entity_decode($content);
 		}
 
-		if ( ! ( $html = $wp_theatre->transient->get('prods', array_merge($atts, $_GET)) ) ) {
+		if ( ! ( $html = $wp_theatre->transient->get('p', array_merge($atts, $_GET)) ) ) {
 			$html = $wp_theatre->productions->html($atts);
-			$wp_theatre->transient->set('prods', array_merge($atts, $_GET), $html);
+			$wp_theatre->transient->set('p', array_merge($atts, $_GET), $html);
 		}
 
 		return $html;
@@ -344,13 +373,34 @@ class WPT_Frontend {
 		return $html;
 	}
 	
+	/* 
+	 * Shortcode to display the upcoming events of a production.
+	 *
+	 * Examples: 
+	 *     [wpt_production_events production=123]
+	 *     [wpt_production_events production=123]{{title|permalink}}{{datetime}}{{tickets}}[/wpt_production_events]
+	 *
+	 * On the page of a single production you can leave out the production:
+	 *
+	 *     [wpt_production_events]
+	 *
+	 */
+	
 	function wpt_production_events($atts, $content=null) {
 		global $wp_theatre;
 
-		if (is_singular(WPT_Production::post_type_name)) {
+		$atts = shortcode_atts( array(
+			'production' => false
+		), $atts );
+		extract($atts);
+
+		if (!$production && is_singular(WPT_Production::post_type_name)) {
+			$production = get_the_ID();
+		}
+
+		if ($production) {			
 			$args = array(
-				'production' => get_the_ID(),
-				'status' => get_post_status()
+				'production' => $production
 			);
 		
 			if (!is_null($content) && !empty($content)) {
@@ -359,9 +409,9 @@ class WPT_Frontend {
 				$args['template'] = '{{remark}} {{datetime}} {{location}} {{tickets}}';
 			}
 			
-			if ( ! ( $html = $wp_theatre->transient->get('events', array_merge($args, $_GET)) ) ) {
+			if ( ! ( $html = $wp_theatre->transient->get('e', array_merge($args, $_GET)) ) ) {
 				$html = $wp_theatre->events->html($args);
-				$wp_theatre->transient->set('events', array_merge($args, $_GET), $html);
+				$wp_theatre->transient->set('e', array_merge($args, $_GET), $html);
 			}
 
 			return $html;

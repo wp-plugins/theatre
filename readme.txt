@@ -16,6 +16,13 @@ __Shortcodes__
 
 Theater comes with several shortcodes and widgets to show off your events. See the [documentation](https://github.com/slimndap/wp-theatre/wiki/Shortcodes) for an overview.
 
+__Receive updates__
+
+Theater for WordPress is constantly being improved with new features and bugfixes. To receive updates whenever something new is added you can:
+
+* [sign up to the newsletter](www.slimndap.com/theater-wordpress-newsletter/) or
+* follow [@theatreforwp](https://twitter.com/theatreforwp).
+
 __Available add-ons__
 
 * [Ticketmatic](http://slimndap.com/product/ticketmatic-for-wordpress/)

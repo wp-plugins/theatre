@@ -16,13 +16,6 @@ __Shortcodes__
 
 Theater comes with several shortcodes and widgets to show off your events. See the [documentation](https://github.com/slimndap/wp-theatre/wiki/Shortcodes) for an overview.
 
-__Receive updates__
-
-Theater for WordPress is constantly being improved with new features and bugfixes. To receive updates whenever something new is added you can:
-
-* [sign up to the newsletter](www.slimndap.com/theater-wordpress-newsletter/) or
-* follow [@theatreforwp](https://twitter.com/theatreforwp).
-
 __Available add-ons__
 
 * [Ticketmatic](http://slimndap.com/product/ticketmatic-for-wordpress/)
@@ -71,10 +64,6 @@ __I don't see the Theater Calendar widget__
 
 Make sure that you select a page to show your event listings on in the Theater plugin settings.
 
-__I don't see the Theater Categories widget__
-
-Make sure that you select a page to show your event listings on in the Theater plugin settings.
-
 __I really need feature X. Can you add it?__
 
 If you are missing a feature that you really need for your website you can:
@@ -86,6 +75,10 @@ If you are missing a feature that you really need for your website you can:
 The new feature may be added directly to the Theater plugin or as an extension so that others may benefit from this as well.
 
 == Changelog ==
+
+= 0.8.2 = 
+* New date filter for template placeholder: `{{datetime|date('D j')}}`. Thank you [Epco](http://wordpress.org/support/profile/epco)!
+* Show all events for today or tomorrow: `[wpt_events day="today"]` and `[wpt_events day="tomorrow"]`. Thank you [mychelemy](https://github.com/mychelemy)!
 
 = 0.8 =
 * New Theater Calendar widget with upcoming events.

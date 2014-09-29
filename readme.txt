@@ -2,7 +2,7 @@
 Contributors: slimndap
 Tags: theatre, stage, venue, events, shows, concerts, tickets, ticketing, sports, performances, calendar, workshops, theater, cinema
 Requires at least: 3.8
-Tested up to: 4.0
+Tested up to: 3.9
 Stable tag: trunk
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -187,6 +187,9 @@ The new feature may be added directly to the Theater plugin or as an extension s
 * Basic version of the plugin.
 
 == Upgrade Notice ==
+
+= 0.8.3. =
+* Fixed event creation link for WordPress installs with non-standard folder structures.
 
 = 0.8.2. =
 * Fixed event calendar showing months with old events.

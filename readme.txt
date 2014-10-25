@@ -76,6 +76,23 @@ The new feature may be added directly to the Theater plugin or as an extension s
 
 == Changelog ==
 
+= 0.9 = 
+* Added support for start and end dates in `[wpt_events]` shortcode. You can throw anything at it that strtotime understands! Some examples:
+    * `[wpt_events start="now"]`
+    * `[wpt_events start="today"]`
+    * `[wpt_events start="2014-09-02"]`
+    * `[wpt_events end="now"]`
+    * `[wpt_events start="2014-09-01" end="2014-10-01"]`
+    * `[wpt_events start="now" end="+1 week"]`
+    * `[wpt_events start="next Monday" end="next Monday +1 week"]`
+* Removed WordPress SEO by Yoast meta box from event admin screens.
+* Improved category filtering for production and event listings. You can now use `cat`, `category_name`, `category__and`, `category__in` and `category__not_in` attributes in the `[wpt_events]` and `[wpt_productions]` shortcodes.
+* Added productions filtering for production listings. You now use `post__in` and `post__not_in` attributes in the `[wpt_productions]` shortcode.
+
+
+= 0.8.3 =
+* Bugfixes.
+
 = 0.8.2 = 
 * New date filter for template placeholder: `{{datetime|date('D j')}}`. Thank you [Epco](http://wordpress.org/support/profile/epco)!
 * Show all events for today or tomorrow: `[wpt_events day="today"]` and `[wpt_events day="tomorrow"]`. Thank you [mychelemy](https://github.com/mychelemy)!

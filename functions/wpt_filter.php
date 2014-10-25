@@ -9,7 +9,85 @@
 	class WPT_Filter {
 		
 		function __construct() {
-			$this->allowed_functions = Array('permalink','date');
+			$this->allowed_functions = Array('permalink','date','wpautop','tickets_url');
+
+			/**
+			 * Make sure all filters are cleaned up.
+			 * Necessary for unit tests to work.
+			 */
+			remove_all_filters('wpt_filter_date');
+			remove_all_filters('wpt_filter_permalink');
+			remove_all_filters('wpt_filter_wpautop');
+			remove_all_filters('wpt_filter_tickets_url');
+
+			add_filter('wpt_filter_date', array($this,'date'),10,3);
+			add_filter('wpt_filter_permalink', array($this,'permalink'),10,2);
+			add_filter('wpt_filter_wpautop', array($this,'wpautop'),10,1);
+			add_filter('wpt_filter_tickets_url', array($this,'tickets_url'),10,2);
+			
+		}
+		
+	 	/*
+	 	 * Permalink filter.
+		 * Add a link (<a>) to the production detail page around the content.
+		 */	 
+		function permalink($content, $object) {
+			if (!empty($content)) {
+				$permalink_args = array(
+					'html'=>true,
+					'text'=> $content,
+					'inside'=>true
+				);
+				if (method_exists($object, 'permalink')) {
+					$content = $object->permalink($permalink_args);
+				}
+			}
+			return $content;		
+		}
+		
+		/**
+		 * Date filter.
+		 * Format the content using the date format defined in the third argument.
+		 */
+		function date($content, $object, $format='') {
+			if (!empty($format)) {	
+				if (is_numeric($content)) {
+					$timestamp = $content;
+				} else {
+					$timestamp = strtotime($content);								
+				}
+				$content = date_i18n($format,$timestamp);
+			}
+			return $content;
+		}
+		
+	 	/*
+	 	 * Wpautop filter.
+		 * Changes double line-breaks in the content into HTML paragraphs (<p>...</p>).
+		 */
+		function wpautop($content) {
+			return wpautop($content);
+		}
+		
+		/**
+	 	 * Tickets URL filter.
+		 * Add a link (<a>) to the tickets URL around the content.
+		 */	 
+		function tickets_url($content, $object) {
+			if (!empty($content)) {
+				$tickets_url_args = array(
+					'html'=>true,
+					'text'=> $content
+				);
+				if (method_exists($object, 'tickets_url')) {
+					$tickets_url_content = $object->tickets_url($tickets_url_args);	
+					if (!empty($tickets_url_content)) {
+						$content = $tickets_url_content;
+					}
+				}
+			}
+			return $content;		
+			
 		}
 		
 		/*
@@ -28,36 +106,9 @@
 				$function = $this->get_function($filter);
 				$arguments = $this->get_arguments($filter);
 				if ($this->is_valid($function, $arguments, $object)) {
-					switch($function) {
-					 	/*
-						 * Add a link (<a>) to the production detail page around the content.
-						 */
-						case 'permalink':
-							if (!empty($content)) {
-								$args = array(
-									'html'=>true,
-									'text'=> $content,
-									'inside'=>true
-								);
-								$content = $object->permalink($args);
-							}
-							break;
-						/*
-						 * Format the content using the date format defined in $arguments[0].
-						 */
-						case 'date':
-							if (!empty($arguments[0])) {	
-								if (is_numeric($content)) {
-									$timestamp = $content;
-								} else {
-									$timestamp = strtotime($content);								
-								}
-								$content = date_i18n($arguments[0],$timestamp);
-							}
-					}
-				}
-					
-				
+					array_unshift($arguments, $content, $object);
+					$content = apply_filters_ref_array('wpt_filter_'.$function,$arguments);
+				}				
 			}
 
 			return $content;
@@ -94,7 +145,7 @@
 		 * Extract the arguments from a filter.
 		 */
 		function get_arguments($filter) {
-			$arguments = Array();
+			$arguments = array();
 		
 			$brackets_open = strpos($filter, '(');
 			$brackets_close = strpos($filter, ')');
@@ -131,7 +182,6 @@
 			return 
 				!empty($function) && 
 				in_array($function, $this->allowed_functions) &&
-				is_array($arguments) &&
-				method_exists($object, $function);
+				is_array($arguments);
 		}
 	}

@@ -29,7 +29,8 @@ class WPT_Events extends WPT_Listing {
 	 */
 	function days($filters=array()) {
 		// get all event according to remaining filters
-		$filters['day'] = false;
+		$filters['start'] = 'now';
+		$filters['end'] = false;
 		$events = $this->load($filters);		
 		$days = array();
 		foreach ($events as $event) {
@@ -45,9 +46,13 @@ class WPT_Events extends WPT_Listing {
 			'limit' => false,
 			'upcoming' => false,
 			'past' => false,
-			'day' => false,
-			'month' => false,
-			'category' => false,
+			'start' => false,
+			'end' => false,
+			'cat' => false,
+			'category_name' => false,
+			'category__and' => false,
+			'category__in' => false,
+			'category__not_in' => false,
 			'season' => false,
 			'production' => false,
 			'status' => array('publish')
@@ -78,11 +83,15 @@ class WPT_Events extends WPT_Listing {
 		global $wp_theatre;
 
 		$defaults = array(
-			'category' => false,
-			'day' => false,
+			'cat' => false,
+			'category_name' => false,
+			'category__and' => false,
+			'category__in' => false,
+			'category__not_in' => false,
 			'groupby'=>false,
 			'limit' => false,
-			'month' => false,
+			'start' => false,
+			'end' => false,
 			'paginateby' => array(),
 			'production' => false,
 			'season' => false,
@@ -102,9 +111,13 @@ class WPT_Events extends WPT_Listing {
 			'upcoming' => $args['upcoming'],
 			'production' => $args['production'],
 			'limit' => $args['limit'],
-			'category' => $args['category'],
-			'month' => $args['month'],
-			'day' => $args['day'],
+			'cat' => $args['cat'],
+			'category_name' => $args['category_name'],
+			'category__and' => $args['category__and'],
+			'category__in' => $args['category__in'],
+			'category__not_in' => $args['category__not_in'],
+			'start' => $args['start'],
+			'end' => $args['end'],
 			'season' => $args['season']
 		);
 
@@ -235,12 +248,18 @@ class WPT_Events extends WPT_Listing {
 			'order' => 'asc'
 		);
 		
-		if ($filters['upcoming']) {
-			$args['meta_query'][] = array (
-				'key' => $wp_theatre->order->meta_key,
-				'value' => time(),
-				'compare' => '>='
-			);
+		/**
+		 * Apply upcoming filter.
+		 * Ignore when one of the other time related filters are set.
+		 * Maybe deprecate in favor of `start="now"`.
+		 */
+		
+		if (
+			$filters['upcoming'] &&
+			!$filters['start'] &&
+			!$filters['end']
+		) {
+			$filters['start'] = 'now';
 		}
 
 		if ($filters['production']) {
@@ -251,30 +270,33 @@ class WPT_Events extends WPT_Listing {
 			);
 		}
 		
-		if ($filters['month']) {
+		/**
+		 * Apply start filter.
+		 * Only show events that start after the `start` value.
+		 * Can be any value that is supported by strtotime().
+		 * @since 0.9
+		 */
+		
+		if ($filters['start']) {
 			$args['meta_query'][] = array (
-				'key' => 'event_date',
-				'value' => $filters['month'],
-				'compare' => 'LIKE'
+				'key' => $wp_theatre->order->meta_key,
+				'value' => strtotime($filters['start']),
+				'compare' => '>='
 			);
 		}
 
-		if ($filters['day']) {
-			/*
-			 * Translate 'today' and 'tomorrow' to real dates
-			 */
-			switch ($filters['day']) {
-				case 'today':
-					$filters['day'] = date('Y-m-d',strtotime('today'));
-					break;
-				case 'tomorrow':
-					$filters['day'] = date('Y-m-d',strtotime('tomorrow'));
-					break;
-			}
+		/**
+		 * Apply end filter.
+		 * Only show events that start before the `end` value.
+		 * Can be any value that is supported by strtotime().
+		 * @since 0.9
+		 */
+		
+		if ($filters['end']) {
 			$args['meta_query'][] = array (
-				'key' => 'event_date',
-				'value' => $filters['day'],
-				'compare' => 'LIKE'
+				'key' => $wp_theatre->order->meta_key,
+				'value' => strtotime($filters['end']),
+				'compare' => '<='
 			);
 		}
 
@@ -286,14 +308,32 @@ class WPT_Events extends WPT_Listing {
 			);
 		}
 		
-		if ($filters['category']) {
-			$args['cat'] = $filters['category'];
+		if ($filters['cat']) {
+			$args['cat'] = $filters['cat'];
+		}
+		
+		if ($filters['category_name']) {
+			$args['category_name'] = $filters['category_name'];
+		}
+		
+		if ($filters['category__and']) {
+			$args['category__and'] = $filters['category__and'];
+		}
+		
+		if ($filters['category__in']) {
+			$args['category__in'] = $filters['category__in'];
+		}
+		
+		if ($filters['category__not_in']) {
+			$args['category__not_in'] = $filters['category__not_in'];
 		}
 		
 		if ($filters['limit']) {
 			$args['posts_per_page'] = $filters['limit'];
+			$args['numberposts'] = $filters['limit'];
 		} else {	
 			$args['posts_per_page'] = -1;
+			$args['numberposts'] = -1;
 		}
 
 		$posts = get_posts($args);
@@ -314,8 +354,8 @@ class WPT_Events extends WPT_Listing {
 	 */
 	function months($filters=array()) {
 		// get all event according to remaining filters
-		$filters['upcoming'] = true;
-		$filters['month'] = false;
+		$filters['start'] = 'now';
+		$filters['end'] = false;
 		$events = $this->load($filters);
 		$months = array();
 		foreach ($events as $event) {

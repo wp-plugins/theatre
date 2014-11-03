@@ -205,8 +205,11 @@ The new feature may be added directly to the Theater plugin or as an extension s
 
 == Upgrade Notice ==
 
+= 0.9.2 = 
+* Introduced some new hooks and filters.
+
 = 0.9.1 =
-* Bugfix: production and events listing were not working properly when being grouped by category, month or day.
+* Bugfix: production and events listing were not working properly when being grouped by category, month or date.
 
 = 0.8.3. =
 * Fixed event creation link for WordPress installs with non-standard folder structures.

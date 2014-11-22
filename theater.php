@@ -4,7 +4,7 @@ Plugin Name: Theater
 Plugin URI: http://wordpress.org/plugins/theatre/
 Description: Turn your Wordpress website into a theater website.
 Author: Jeroen Schmit, Slim & Dapper
-Version: 0.9.3
+Version: 0.9.4
 Author URI: http://slimndap.com/
 Text Domain: wp_theatre
 Domain Path: /lang
@@ -12,7 +12,7 @@ Domain Path: /lang
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 	
-$wpt_version = '0.9.3';
+$wpt_version = '0.9.4';
 
 class WP_Theatre {
 	function __construct() {
@@ -61,8 +61,8 @@ class WP_Theatre {
 			add_action('admin_init',array($this,'update'));
 		}
 		
-		// Loaded action
-		do_action( 'wpt_loaded' );
+		// Hook wpt_loaded action.
+		add_action ('plugins_loaded', array($this,'wpt_loaded') );
 	}
 		
 	/**
@@ -121,6 +121,20 @@ class WP_Theatre {
 		$this->activate();
 	}
 
+
+ 
+ 	/**
+ 	 * Fires the `wpt_loaded` action.
+ 	 * 
+ 	 * Use this to safely load plugins that depend on Theater.
+ 	 *
+ 	 * @access public
+ 	 * @return void
+ 	 */
+ 	function wpt_loaded() {
+		do_action('wpt_loaded');
+	}
+
 	/*
 	 * Private functions.
 	 */
@@ -140,6 +154,7 @@ class WP_Theatre {
 		}
 		return $seasons;
 	}
+
 
 	/**
 	 * Deprecated functions. 

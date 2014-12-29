@@ -172,8 +172,6 @@ class WPT_Frontend {
 		global $wp_query;
 		
 		$defaults = array(
-			'upcoming' => 'true',
-			'past' => false,
 			'paginateby'=>array(),
 			'category'=> false, // deprecated since v0.9.
 			'cat'=>false,
@@ -183,33 +181,28 @@ class WPT_Frontend {
 			'category__not_in'=>false,
 			'day' => false,
 			'month' => false,
+			'year' => false,
 			'season'=> false,
 			'start' => false,
 			'end' => false,
 			'groupby'=>false,
 			'limit'=>false,
+			'order'=>'asc',
 		);
 		
-		if (!empty($wp_query->query_vars['wpt_category'])) {
-			$defaults['category']=$wp_query->query_vars['wpt_category'];
-		}
-
-		if (!empty($wp_query->query_vars['wpt_day'])) {
-			$defaults['day']=$wp_query->query_vars['wpt_day'];
-		}
-		
-		if (!empty($wp_query->query_vars['wpt_month'])) {
-			$defaults['month']=$wp_query->query_vars['wpt_month'];
-		}
-		
 		$atts = shortcode_atts( $defaults, $atts );
-				
+
 		if (!empty($atts['paginateby'])) {
 			$fields = explode(',',$atts['paginateby']);
 			for ($i=0;$i<count($fields);$i++) {
 				$fields[$i] = trim($fields[$i]);
 			}
 			$atts['paginateby'] = $fields;
+		}
+		
+		if(!empty($atts['year'])) {
+			$atts['start'] = date('Y-m-d',strtotime($atts['year'].'-01-01'));
+			$atts['end'] = date('Y-m-d',strtotime($atts['year'].'-01-01 + 1 year'));
 		}
 		
 		if(!empty($atts['month'])) {
@@ -221,7 +214,7 @@ class WPT_Frontend {
 			$atts['start'] = date('Y-m-d',strtotime($atts['day']));
 			$atts['end'] = date('Y-m-d',strtotime($atts['day'].' + 1 day'));
 		}
-		
+
 		if (!empty($atts['category__in'])) {
 			$atts['category__in'] = explode(',',$atts['category__in']);
 		}
@@ -230,7 +223,12 @@ class WPT_Frontend {
 			$atts['category__not_in'] = explode(',',$atts['category__not_in']);
 		}
 		
-		$atts['upcoming'] = 'true' === $atts['upcoming'];
+		if (
+			empty($atts['start']) &&
+			empty($atts['end'])
+		) {
+			$atts['start'] = 'now';
+		}
 		
 		if (!is_null($content) && !empty($content)) {
 			$atts['template'] = html_entity_decode($content);
@@ -256,9 +254,9 @@ class WPT_Frontend {
 			}
 			$atts['cat'] = implode(',',$categories);
 		}
-		
+
 		if ( ! ( $html = $wp_theatre->transient->get('e', array_merge($atts, $_GET)) ) ) {
-			$html = $wp_theatre->events->html($atts);
+			$html = $wp_theatre->events->get_html($atts);
 			$wp_theatre->transient->set('e', array_merge($atts, $_GET), $html);
 		}
 		return $html;
@@ -281,7 +279,8 @@ class WPT_Frontend {
 			'category__in'=>false,
 			'category__not_in'=>false,
 			'groupby'=>false,
-			'limit'=>false
+			'limit'=>false,
+			'order'=>'asc'
 		);
 				
 		if (!empty($wp_query->query_vars['wpt_category'])) {
@@ -340,7 +339,7 @@ class WPT_Frontend {
 		}
 
 		if ( ! ( $html = $wp_theatre->transient->get('p', array_merge($atts, $_GET)) ) ) {
-			$html = $wp_theatre->productions->html($atts);
+			$html = $wp_theatre->productions->get_html($atts);
 			$wp_theatre->transient->set('p', array_merge($atts, $_GET), $html);
 		}
 
@@ -408,7 +407,7 @@ class WPT_Frontend {
 				$atts['paginateby'] = $fields;
 			}
 
-			return $wp_theatre->events->html($atts);
+			return $wp_theatre->events->get_html($atts);
 		}
 	}
 	
@@ -438,7 +437,7 @@ class WPT_Frontend {
 				$atts['paginateby'] = $fields;
 			}
 
-			return $wp_theatre->productions->html($atts);
+			return $wp_theatre->productions->get_html($atts);
 		}
 	}
 	
@@ -491,7 +490,7 @@ class WPT_Frontend {
 			}
 			
 			if ( ! ( $html = $wp_theatre->transient->get('e', array_merge($args, $_GET)) ) ) {
-				$html = $wp_theatre->events->html($args);
+				$html = $wp_theatre->events->get_html($args);
 				$wp_theatre->transient->set('e', array_merge($args, $_GET), $html);
 			}
 

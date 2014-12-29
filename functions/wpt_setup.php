@@ -12,8 +12,6 @@
 			
 			add_action( 'plugins_loaded', array($this,'plugins_loaded'));
 			
-			// make sure this runs after any save_post hooks in WPT_Admin (priority 10)
-			add_action('save_post_'.WPT_Production::post_type_name,array( $this,'save_production'), 20);
 			add_action('updated_post_meta', array($this,'updated_post_meta'), 20 ,4);
 			add_action('added_post_meta', array($this,'updated_post_meta'), 20 ,4);
 			add_action( 'set_object_terms', array($this,'set_object_terms'),20, 6);
@@ -23,9 +21,6 @@
 			add_action('untrash_post',array( $this,'untrash_post'));
 			
 			add_filter( 'cron_schedules', array($this,'cron_schedules'));
-
-			add_filter( 'query_vars', array($this,'query_vars'));	 
-
 		}
 	
 		/**
@@ -171,31 +166,6 @@
 			load_plugin_textdomain('wp_theatre', false, dirname( plugin_basename( __FILE__ ) ) . '/../lang/' );
 		}
 		
-		/* 
-		 * Add listing filters to public query vars
-		 * Eg. $wp_query->query_vars['wpt_category']
-		 */
-		
-		function query_vars( $vars ){
-			$vars[] = 'wpt_day';
-			$vars[] = 'wpt_month';
-			$vars[] = 'wpt_category';
-			return $vars;
-		}
-
-		function save_production($post_id) {
-			$production = new WPT_Production($post_id);
-			$events = $production->events();
-			
-			// give child events the same season
-			if ($season = $production->season()) {
-				foreach ($events as $event) {
-					delete_post_meta($event->ID, WPT_Season::post_type_name);
-					add_post_meta($event->ID, WPT_Season::post_type_name, $season->ID);
-				}
-			}
-		}
-		
 		/*
 		 * Give child events the same category as the parent production.
 		 * If the category of a production is set, walk through all connected events and
@@ -237,7 +207,7 @@
 					'status' => 'any',
 					'production' => $post_id
 				);
-				$events = $wp_theatre->events->load($args);
+				$events = $wp_theatre->events->get($args);
 				foreach ($events as $event) {
 					wp_trash_post($event->ID);
 				}							
@@ -300,7 +270,7 @@
 					$args = array(
 						'production'=>$post->ID
 					);
-					$events = $wp_theatre->events->load($args);
+					$events = $wp_theatre->events->get($args);
 					foreach($events as $event) {
 						update_post_meta($event->ID, WPT_Season::post_type_name, $meta_value);
 					}

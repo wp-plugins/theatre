@@ -330,44 +330,6 @@ class WPT_Event {
 		}
 	}
 	
-	function meta() {
-		$html = '';
-		
-		$html.= '<span itemscope itemtype="http://data-vocabulary.org/Event">';	
-
-		// image
-		// Thumbnail
-		if ($this->production()->thumbnail()!='') {
-			$html.= '<meta itemprop="image" content="'.wp_get_attachment_url($this->production()->thumbnail()).'" />';
-		}
-
-		// startDate
-		$html.= '<meta itemprop="startDate" content="'.date('c',$this->datetime()).'" />';
-		
-		// summary
-		$html.= '<meta itemprop="summary" content="'.$this->production()->title().'" />';
-		
-		// url
-		$html.= '<meta itemprop="url" content="'.get_permalink($this->production()->ID).'" />';
-
-		//location
-		$html.= '<span itemprop="location" itemscope itemtype="http://data-vocabulary.org/Organization">';
-		if ($this->venue()!='') {
-			$html.= '<meta itemprop="name" content="'.$this->venue().'" />';
-		}
-		if ($this->city()!='') {
-			$html.= '<span itemprop="address" itemscope itemtype="http://data-vocabulary.org/Address">';
-			$html.= '<meta itemprop="locality" content="'.$this->city().'" />';
-			$html.= '</span>';
-		}
-		
-		$html.= '</span>'; // .location
-
-		$html.= '</span>';
-		
-		return $html;
-	}
-
 	function permalink($args=array()) {
 		return $this->production()->permalink($args);
 	}
@@ -395,7 +357,13 @@ class WPT_Event {
 		$args = wp_parse_args( $args, $defaults );
 
 		if (!isset($this->prices)) {
-			$this->prices = apply_filters('wpt_event_prices',get_post_meta($this->ID,'_wpt_event_tickets_price'), $this);
+			$prices = get_post_meta($this->ID,'_wpt_event_tickets_price');
+			$prices_sanitized = array();
+			for($p=0;$p<count($prices);$p++) {
+				$price_parts = explode('|',$prices[$p]);
+				$prices_sanitized[] = (float) $price_parts[0];
+			}
+			$this->prices = apply_filters('wpt_event_prices',$prices_sanitized, $this);
 		}
 
 		if ($args['html']) {
@@ -627,7 +595,7 @@ class WPT_Event {
 				
 			}
 
-			return $html;					
+			return apply_filters('wpt_event_tickets_url_html', $html, $this);
 		
 		} else {
 			return $this->tickets_url;
@@ -822,8 +790,6 @@ class WPT_Event {
 			$html = str_replace('{{tickets}}', $tickets, $html);
 		}
 		
-		$html.= $this->meta();
-
 		// Filters
 		$html = apply_filters('wpt_event_html',$html, $this);
 		$classes = apply_filters('wpt_event_classes',$classes, $this);

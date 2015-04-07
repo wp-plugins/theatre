@@ -553,9 +553,13 @@ class WPT_Event {
 		$args = wp_parse_args( $args, $defaults );
 
 		if (!isset($this->tickets_url)) {
+			
+			$url = get_post_meta($this->ID,'tickets_url',true);
+
 			if (
 				!empty($wp_theatre->wpt_tickets_options['integrationtype']) && 
-				$wp_theatre->wpt_tickets_options['integrationtype']=='iframe'
+				$wp_theatre->wpt_tickets_options['integrationtype']=='iframe' &&
+				!empty($url)
 			) {
 				$url = get_permalink($wp_theatre->wpt_tickets_options['iframepage']);
 				$url = add_query_arg(
@@ -563,8 +567,6 @@ class WPT_Event {
 						__('Event','wp_theatre') => $this->ID
 					) , $url
 				);
-			} else {
-				$url = get_post_meta($this->ID,'tickets_url',true);
 			}
 			$this->tickets_url = apply_filters('wpt_event_tickets_url',$url,$this);
 		}
@@ -714,6 +716,7 @@ class WPT_Event {
 	 * HTML version of the event.
 	 *
 	 * @since 0.4
+	 * @since 0.10.8	Added a filter to the default template.
 	 *
 	 * @param array $args {
 	 *
@@ -725,7 +728,10 @@ class WPT_Event {
 	 */
 	function html($args=array()) {
 		$defaults = array(
-			'template' => '{{thumbnail|permalink}} {{title|permalink}} {{remark}} {{datetime}} {{location}} {{tickets}}'
+			'template' => apply_filters(
+				'wpt_event_template_default',
+				'{{thumbnail|permalink}} {{title|permalink}} {{remark}} {{datetime}} {{location}} {{tickets}}'
+			),
 		);
 		$args = wp_parse_args( $args, $defaults );
 

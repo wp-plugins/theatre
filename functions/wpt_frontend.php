@@ -82,10 +82,20 @@ class WPT_Frontend {
 		return $query;
 	}
 
-	function the_content($content) {
+	/**
+	 * Adds events listing to the content of a productio page.
+	 * 
+	 * @since 	?
+	 * @since 	0.11	Event are now only added to the main post content.
+	 * 					As explained by Pippin:
+	 *					https://pippinsplugins.com/playing-nice-with-the-content-filter/	
+	 * @param 	string 	$content
+	 * @return 	void
+	 */
+	public function the_content($content) {
 		global $wp_theatre;
 		
-		if (is_singular(WPT_Production::post_type_name)) {
+		if (is_singular(WPT_Production::post_type_name) && is_main_query()) {
 			if (
 				isset( $wp_theatre->options['show_season_events'] ) &&
 				in_array($wp_theatre->options['show_season_events'], array('above','below'))
@@ -118,7 +128,7 @@ class WPT_Frontend {
 			}
 		}
 		
-		if (is_singular(WPT_Production::post_type_name)) {
+		if (is_singular(WPT_Production::post_type_name) && is_main_query()) {
 
 			/**
 			 * Filter the content of a production page.

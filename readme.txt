@@ -85,7 +85,7 @@ The new feature may be added directly to the Theater plugin or as an extension s
 Release Date: May 30th, 2015
 
 * Enhancements
-    * A brand new event editor. See the [release notes](http://www.slimndap.com/a-new-event-editor/) for all the info.
+    * A brand new event editor. See the [release notes](http://www.slimndap.com/theater-for-wordpress-0-11-a-new-event-editor/) for all the info.
 
 = 0.10 =
 
@@ -232,6 +232,9 @@ Release Date: December 29th, 2014
 * Basic version of the plugin.
 
 == Upgrade Notice ==
+
+= 0.11.1 =
+* Fix: The new event editor was overwriting disabled event fields.
 
 = 0.11 =
 * Fix: Importer now only stores fields for event when the fields are explicitly set.

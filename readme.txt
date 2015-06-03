@@ -13,10 +13,10 @@ Build a website for your theater, music venue, sports team, cinema or your rockb
 A WordPress plugin to manage events with all necessary shortcodes and widgets for your theater.
 
 
-> *Newsletter*
-> This plugin is in active development and updated frequently. Please sign-up to the newsletter to stay informed about upcoming features and successful showcases.
+> ## Newsletter
+> This plugin is in active development and updated frequently. Please sign-up for the newsletter to stay informed about upcoming features and successful showcases.
 >
-> [Sign up](http://www.slimndap.com/theater-wordpress-newsletter/)
+> [Sign up for the newsletter](http://www.slimndap.com/theater-wordpress-newsletter/)
 
 __Shortcodes__
 

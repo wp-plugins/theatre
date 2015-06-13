@@ -64,6 +64,9 @@ If you are a musician then your band is a _production_ and your gigs are the _ev
 
 For a sports club your teams are the _productions_ and the games are the _events_.
 
+== Screenshots ==
+
+1. Production Admin Listing.
 
 == Frequently Asked Questions ==
 

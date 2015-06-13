@@ -376,6 +376,17 @@ class WPT_Admin {
 	
 	}
 	
+	/**
+	 * Saves all custom fields for an event.
+	 * 
+	 * Runs when an event is submitted from the event admin form.
+	 *
+	 * @since 	?.?
+	 * @since 	0.11		Use WPT_Event_Editor::save_field() to save all field values.
+	 * @since 	0.11.5		Added the new $data param to WPT_Event_Editor::save_field().
+	 * @param 	int 		$post_id	The event_id.
+	 * @return void
+	 */
 	function save_event( $post_id ) {
 		
 		global $wp_theatre;
@@ -411,7 +422,7 @@ class WPT_Admin {
 		update_post_meta( $post_id, WPT_Production::post_type_name, $_POST[WPT_Production::post_type_name] );
 		
 		foreach ($wp_theatre->event_editor->get_fields( $post_id ) as $field) {
-			$wp_theatre->event_editor->save_field($field, $post_id);
+			$wp_theatre->event_editor->save_field($field, $post_id, $_POST);
 		}
 			
 	}

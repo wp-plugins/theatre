@@ -23,6 +23,9 @@ Theater comes with several shortcodes and widgets to show off your events. See t
 __Available add-ons__
 
 * [Ticketmatic](http://slimndap.com/product/ticketmatic-for-wordpress/)
+* ActiveTickets
+* Ticketscript
+* Facebook Events
 
 __Missing features?__
 

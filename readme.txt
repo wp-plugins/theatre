@@ -23,9 +23,6 @@ Theater comes with several shortcodes and widgets to show off your events. See t
 __Available add-ons__
 
 * [Ticketmatic](http://slimndap.com/product/ticketmatic-for-wordpress/)
-* ActiveTickets
-* Ticketscript
-* Facebook Events
 
 __Missing features?__
 
@@ -64,9 +61,6 @@ If you are a musician then your band is a _production_ and your gigs are the _ev
 
 For a sports club your teams are the _productions_ and the games are the _events_.
 
-== Screenshots ==
-
-1. Production Admin Listing.
 
 == Frequently Asked Questions ==
 
@@ -242,6 +236,9 @@ Release Date: December 29th, 2014
 * Basic version of the plugin.
 
 == Upgrade Notice ==
+
+= 0.11.6 =
+* Removes a couple of (harmless) php warnings.
 
 = 0.11.5 =
 * Create new events for a production without a page reload.

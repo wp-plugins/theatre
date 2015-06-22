@@ -207,6 +207,14 @@ class WPT_Frontend {
 			'order'=>'asc',
 		);
 		
+		/**
+		 * Filter the defaults for the [wpt_events] shortcode.
+		 *
+		 * @since 	0.11.9
+		 * @param 	array 	$defaults	The current defaults.
+		 */
+		$defaults = apply_filters( 'wpt/frontend/shortcode/events/defaults', $defaults);
+
 		$atts = shortcode_atts( $defaults, $atts );
 
 		if (!empty($atts['paginateby'])) {
@@ -279,6 +287,14 @@ class WPT_Frontend {
 			}
 			$atts['cat'] = implode(',',$categories);
 		}
+
+		/**
+		 * Filter the filters for the events listing.
+		 *
+		 * @since 	0.11.9
+		 * @param 	array 	$atts	The current filters, based on the shortcode attributes.
+		 */
+		$atts = apply_filters( 'wpt/frontend/shortcode/events/filters', $atts);
 
 		/*
 		 * Base the $args parameter for the transient on $atts and $wp_query,

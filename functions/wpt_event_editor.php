@@ -51,6 +51,7 @@ class WPT_Event_Editor {
 	 * @since 0.11
 	 */
 	public function enqueue_scripts() {
+		
 		wp_localize_script( 'wp_theatre_admin', 'wpt_event_editor_defaults', $this->get_defaults() );
 
 		wp_localize_script(
@@ -60,12 +61,15 @@ class WPT_Event_Editor {
 				'nonce' => wp_create_nonce( 'wpt_event_editor_ajax_nonce' ),
 			)
 		);
+
 	}
 
 	/**
 	 * Creates a new event for a production submitted through AJAX.
 	 *
-	 * @since 0.11.5
+	 * @since	0.11.5
+	 * @since 	0.12	Event now inherits post_status from production.
+	 *					Fixes #141.
 	 */
 	public function create_event_over_ajax() {
 
@@ -77,7 +81,7 @@ class WPT_Event_Editor {
 
 			$post = array(
 				'post_type' => WPT_Event::post_type_name,
-				'post_status' => 'publish',
+				'post_status' => get_post_status( $post_data['post_ID'] ),
 			);
 
 			if ( $event_id = wp_insert_post( $post ) ) {
@@ -139,9 +143,11 @@ class WPT_Event_Editor {
 	 *
 	 * You can use the 'wpt/event_editor/defaults'-filter to alter the settings.
 	 *
-	 * @since 0.11
-	 * @access private
-	 * @return array {
+	 * @since	0.11
+	 * @since 	0.12	Added 'language' to defaults.
+	 *					Fixes #135.	
+	 * @access 	private
+	 * @return 	array {
 	 * 		int		$duration			Default duration of an event.
 	 *									This is used to automatically set the end time of an event when
 	 *									you create a new event.
@@ -155,6 +161,8 @@ class WPT_Event_Editor {
 	 */
 	private function get_defaults() {
 
+		$language_parts = explode('-', get_bloginfo('language'));	
+
 		$defaults = array(
 			'duration' => 2 * HOUR_IN_SECONDS,
 			'datetime_format' => 'Y-m-d H:i',
@@ -162,6 +170,7 @@ class WPT_Event_Editor {
 			'tickets_button' => __( 'Tickets', 'wp_theatre' ),
 			'tickets_status' => WPT_Event::tickets_status_onsale,
 			'confirm_delete_message' => __( 'Are you sure that you want to delete this event?', 'wp_theatre' ),
+			'language' => $language_parts[0],
 		);
 
 		/**
@@ -602,6 +611,7 @@ class WPT_Event_Editor {
 	 *					@see https://github.com/slimndap/wp-theatre/issues/127
 	 * @since	0.11.5	Added a container div around the list HTML.
 	 *					Added a filter to the list HTML.
+	 * @since 	0.12	Added support for events with an 'auto-draft' post_status.
 	 * @param 	int 	$production_id	The production.
 	 * @return 	string	The HTML.
 	 */
@@ -612,7 +622,7 @@ class WPT_Event_Editor {
 		$html = '';
 
 		$args = array(
-			'status' => array( 'any' ),
+			'status' => array( 'any', 'auto-draft' ),
 			'production' => $production_id,
 		);
 		$events = $wp_theatre->events->get( $args );
@@ -671,8 +681,8 @@ class WPT_Event_Editor {
 		);
 
 		$html .= '<td>';
-		$html .= $event->date( $args );
-		$html .= $event->time( $args );
+		$html .= $event->startdate_html();
+		$html .= $event->starttime_html();
 		$html .= '</td>';
 
 		$html .= '<td>';
@@ -682,7 +692,7 @@ class WPT_Event_Editor {
 		$html .= '</td>';
 
 		$html .= '<td>';
-		$html .= $event->tickets( $args );
+		$html .= $event->tickets_html();
 		$html .= '</td>';
 
 		/**
@@ -882,6 +892,9 @@ class WPT_Event_Editor {
 	 * @since 	0.11.1	Leave disabled fields alone.
 	 * @since	0.11.5	Added the $data param, so the editor can also handle data that is not in $_POST.
 	 *					Eg. data submitted through AJAX.
+	 * @since	0.12	Empty values are saved as well.
+	 * 					Fixes #138.
+	 *
 	 * @param 	array 	$field		The field.
 	 * @param 	int 	$event_id	The event.
 	 * @param	array	$data		The form data that was submitted by the user.
@@ -897,7 +910,7 @@ class WPT_Event_Editor {
 			call_user_func_array( $field['save']['callback'], array( $field, $event_id, $data ) );
 		} else {
 			$key = 'wpt_event_editor_'.$field['id'];
-			if ( ! empty($data[ $key ]) ) {
+			if ( isset($data[ $key ]) ) {
 				$value = $data[ $key ];
 				$this->save_value( $value, $field, $event_id );
 			}

@@ -7,7 +7,6 @@ class WPT_Admin {
 		add_action( 'add_meta_boxes', array($this, 'add_meta_boxes'));
 		add_filter( 'wpt_event', array($this,'wpt_event'), 10 ,2);
 		add_action( 'quick_edit_custom_box', array($this,'quick_edit_custom_box'), 10, 2 );
-		add_action( 'wp_dashboard_setup', array($this,'wp_dashboard_setup' ));
 
 		add_action( 'save_post', array( $this, 'save_production' ));
 		add_action( 'save_post', array( $this, 'save_event' ));
@@ -24,9 +23,9 @@ class WPT_Admin {
 
 		add_filter('wpt/event_editor/fields', array($this, 'add_production_to_event_editor'), 10, 2);
 		
+		
 		// More hooks (always load, necessary for bulk editing through AJAX)
 		add_filter('request', array($this,'request'));
-		add_action( 'bulk_edit_custom_box', array($this,'bulk_edit_custom_box'), 10, 2 );
 
 		// Options
 		$this->options = get_option( 'wp_theatre' );
@@ -217,6 +216,7 @@ class WPT_Admin {
             'side'
         ); 	
 	}
+
 	
 	/**
 	 * Adds a production field to the event editor on the event admin page.
@@ -281,35 +281,6 @@ class WPT_Admin {
 		do_action('wpt_admin_meta_box_display', $production, $metabox);
 	}
 
-	function get_events($production_id) {
-		$args = array(
-			'post_type'=>WPT_Event::post_type_name,
-			'meta_key' => 'event_date',
-			'order_by' => 'meta_value',
-			'order' => 'ASC',
-			'posts_per_page' => -1,
-			'post_status'=>'all',
-			'meta_query' => array(
-				array(
-					'key' => WPT_Production::post_type_name,
-					'value' => $production_id,
-					'compare' => '=',
-				),
-			),
-		);
-		$posts = get_posts($args);
-
-		$events = array();
-		for ($i=0;$i<count($posts);$i++) {
-			$datetime = strtotime(get_post_meta($posts[$i]->ID,'event_date',true));
-			$events[$datetime.$posts[$i]->ID] = new WPT_Event($posts[$i]);
-		}
-		
-		ksort($events);
-		return array_values($events);
-
-	}
-
 	/**
 	 * Gets the HTML for a production input control of an event.
 	 *
@@ -326,7 +297,7 @@ class WPT_Admin {
 		$html = '';
 		
 		$production_id = get_post_meta($event_id, $field['id'], true);
-		
+
 		if (!empty($production_id)) {
 			
 			$production = new WPT_Production( $production_id );
@@ -391,7 +362,6 @@ class WPT_Admin {
 	function save_event( $post_id ) {
 		
 		global $wp_theatre;
-		
 		/*
 		 * We need to verify this came from the our screen and with proper authorization,
 		 * because save_post can be triggered at other times.
@@ -432,6 +402,7 @@ class WPT_Admin {
 	 * @since ?.?
 	 * @since 0.11.3	Unhook WPT_Event_Editor::save_event() to avoid loops.
 	 *					See: https://github.com/slimndap/wp-theatre/issues/125
+	 * @since 0.12		Added support for events with an 'auto-draft' post_status.
 	 * 
 	 * @param 	int		$post_id
 	 * @return 	void
@@ -475,13 +446,17 @@ class WPT_Admin {
 		/*
 		 *	 Update connected Events
 		 */
-		
 		// unhook to avoid loops
 		remove_action( 'save_post', array( $this, 'save_production' ) );
 		remove_action( 'save_post', array( $wp_theatre->event_editor, 'save_event' ) );
 
 		$post = get_post($post_id);
-		$events = $this->get_events($post_id);
+		
+		$args = array(
+			'status' => array( 'any', 'auto-draft' ),
+			'production' => $post_id,
+		);
+		$events = $wp_theatre->events->get( $args );
 
 		foreach($events as $event) {
 			// Keep trashed events in the trash.
@@ -513,22 +488,6 @@ class WPT_Admin {
 		do_action('wpt_admin_after_save_'.WPT_Production::post_type_name, $post_id);
 	}
 	
-    function wp_dashboard_setup() {
-		wp_add_dashboard_widget(
-             'dashboard_wp_theatre',         // Widget slug.
-             __('Theatre','wp_theatre'),         // Title.
-             array($this,'wp_add_dashboard_widget') // Display function.
-        );		    
-    }
-    
-    function wp_add_dashboard_widget() {
-    	global $wp_theatre;
-    	$args = array(
-    		'paginateby' => array('month','category')
-    	);
-    	echo $wp_theatre->events->html($args);
-    }
-
 	function render_event($event) {
 		$html = '';
 		
@@ -665,10 +624,6 @@ class WPT_Admin {
 	    }		
 	}
 
-	function bulk_edit_custom_box($column_name, $post_type) {
-		wp_nonce_field($post_type, $post_type.'_nonce' );
-	}
-	
 	/**
 	 * Admin setting.
 	 */

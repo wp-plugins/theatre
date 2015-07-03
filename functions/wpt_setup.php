@@ -25,6 +25,63 @@
 			add_action('untrash_post',array( $this,'untrash_post'));
 			
 			add_filter( 'cron_schedules', array($this,'cron_schedules'));
+
+			add_filter( 'query_vars', array($this,'add_tickets_url_iframe_query_vars'));	 
+			add_action('init', array($this, 'add_tickets_url_iframe_rewrites'));
+		}
+	
+		/**
+		 * Adds event tickets URL iframe rewrites.
+		 * 
+		 * Rewrite pretty iframed ticket screens URLs from:
+		 *
+		 * http://example.com/tickets/my-event/123
+		 *
+		 * to:
+		 *
+		 * http://example.com/?pagename=tickets&wpt_event_tickets=123
+		 *
+		 * @see		WPT_Setup::add_tickets_url_iframe_query_vars()
+		 * @since	0.12
+		 * @return	void
+		 */
+		public function add_tickets_url_iframe_rewrites() {
+			global $wp_theatre;
+			
+			if (empty($wp_theatre->wpt_tickets_options['iframepage'])) {
+				return;
+			}
+			
+			$iframe_page = get_post($wp_theatre->wpt_tickets_options['iframepage']);
+			
+			if (is_null($iframe_page)) {
+				return;
+			}
+			
+			add_rewrite_tag('%wpt_event_tickets%', '.*');
+
+			add_rewrite_rule(
+				$iframe_page->post_name.'/([a-z0-9-]+)/([0-9]+)$', 
+				'index.php?pagename='.$iframe_page->post_name.'&wpt_event_tickets=$matches[2]',
+				'top'
+			);
+			
+		}
+		
+		/**
+		 * Adds 'wpt_event_tickets' to the query vars.
+		 *
+		 * Makes it possible to access iframed ticket screens like:
+		 * http://example.com/?pagename=tickets&wpt_event_tickets=123
+		 *
+		 * @see WPT_Setup::add_tickets_url_iframe_rewrites()
+		 * @access public
+		 * @param mixed $query_vars
+		 * @return void
+		 */
+		public function add_tickets_url_iframe_query_vars($query_vars) {
+			$query_vars[] = 'wpt_event_tickets';
+			return $query_vars;
 		}
 	
 		/**
@@ -108,11 +165,20 @@
 			);
 		}
 	
+		/**
+		 * Registers the custom post types for productions, events and seasons.
+		 * 
+		 * @since 	?.?
+		 * @since 	0.12	Slug is dynamic.
+		 *					Archive is disabled.
+		 *
+		 * @see		WPT_Production_Permalink::get_permalink()	The production permalink.
+		 *				
+		 * @return void
+		 */
 		public function register_post_types() {
+			global $wp_theatre;
 
-			$permalinks        = get_option( 'wpt_permalinks' );
-			$production_permalink = empty( $permalinks['production_base'] ) ? _x( 'production', 'slug', 'wp_theatre' ) : $permalinks['production_base'];
-			
 			register_post_type( WPT_Production::post_type_name,
 				array(
 					'labels' => array(
@@ -120,16 +186,20 @@
 						'singular_name' => __( 'Production','wp_theatre'),
 						'add_new' =>  _x('Add New', 'production','wp_theatre'),
 						'new_item' => __('New production','wp_theatre'),
-						'add_new_item' => __('Add new').' '.__('production','wp_theatre'),
+						'add_new_item' => __('Add new production','wp_theatre'),
 						'edit_item' => __('Edit production','wp_theatre')
 					),
 					'public' => true,
-					'has_archive' => true,
+					'has_archive' => false,
 					'show_in_menu'  => 'theatre',
 					'show_in_admin_bar' => true,
 		  			'supports' => array('title', 'editor', 'excerpt', 'thumbnail','comments'),
 		  			'taxonomies' => array('category','post_tag'),
-		  			'rewrite' => $production_permalink ? array( 'slug' => untrailingslashit( $production_permalink ), 'with_front' => false, 'feeds' => true ) : false,
+		  			'rewrite' => array( 
+		  				'slug' => $wp_theatre->production_permalink->get_base(), 
+		  				'with_front' => false, 
+		  				'feeds' => true 
+		  			),
 				)
 			);
 			
@@ -231,15 +301,15 @@
 		 * Whenever a production is deleted (not just trashed), make sure that all connected events are deleted as well.
 		 * Events that al already in the trash are left alone.
 		 *
-		 * @since 0.7
- 		 *
+		 * @since 	0.7
+		 * @since	0.12	Added support for events with an 'auto-draft' post_status.
 		 */
 		function before_delete_post($post_id) {
 			$post = get_post($post_id);
 			if (!empty($post) && $post->post_type==WPT_Production::post_type_name) {
 				$args = array (
 					'post_type' => WPT_Event::post_type_name,
-					'post_status' => array('any'),
+					'post_status' => array('any', 'auto-draft'),
 					'meta_query' => array(
 						array(
 							'key' => WPT_Production::post_type_name,
@@ -421,37 +491,6 @@
 		}
 	}
 	
-	add_action( 'wp_ajax_save_bulk_edit_'.WPT_Production::post_type_name, 'wp_ajax_save_bulk_edit_production' );
-	function wp_ajax_save_bulk_edit_production() {
-		$wpt_admin = new WPT_Admin();
-	
-		// TODO perform nonce checking
-		remove_action( 'save_post', array( $this, 'save_post' ) );
-	
-		$post_ids = ( ! empty( $_POST[ 'post_ids' ] ) ) ? $_POST[ 'post_ids' ] : array();
-		if ( ! empty( $post_ids ) && is_array( $post_ids ) ) {
-			if ($_POST['post_status']!=-1) {
-				// Status of production is updated			
-				foreach( $post_ids as $post_id ) {
-					// Update status of connected Events
-					$events = $wpt_admin->get_events($post_id);
-					foreach($events as $event) {
-						
-						$post = array(
-							'ID'=>$event->ID,
-							'post_status'=>$_POST[ 'post_status' ]
-						);
-						wp_update_post($post);
-					}
-				}
-			}
-		}
-	
-		add_action( 'save_post', array( $this, 'save_post' ) );
-	
-		die();					
-	}
-
 
 
 ?>

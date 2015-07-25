@@ -1,5 +1,5 @@
 === Theater for WordPress ===
-Contributors: slimndap
+Contributors: slimndap, mennolui
 Tags: theatre, stage, venue, events, shows, concerts, tickets, ticketing, sports, performances, calendar, workshops, theater, cinema
 Requires at least: 3.8
 Tested up to: 4.2

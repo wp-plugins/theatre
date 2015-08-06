@@ -41,10 +41,12 @@ __Contributors welcome__
 
 This section describes how to install the plugin and get it working.
 
-1. Go to Plugins → Add new.
-1. Search for ‘Theater’.
-1. Look for the 'Theater for WordPress’ plugin and click on ‘Install now’.
-1. Wait for the next screen to load and click on ‘Activate Plugin’.
+__Installation__
+
+1. Go to _Plugins_ → _Add new_.
+1. Search for 'Theater'.
+1. Look for the _Theater for WordPress_ plugin and click on _Install now_.
+1. Wait for the next screen to load and click on _Activate Plugin_.
 
 __Add events__
 

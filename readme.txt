@@ -61,7 +61,7 @@ Add your first event:
 1. Add a featured image (if your theme supports it).
 1. Click on _Publish_.
 
-== Show your events ==
+__Show your events__
 
 You can show your upcoming events on a page.
 

@@ -5,7 +5,7 @@
 	Plugin URI: http://wordpress.org/plugins/theatre/
 	Description: Turn your Wordpress website into a theater website.
 	Author: Jeroen Schmit, Slim & Dapper
-	Version: 0.12.2
+	Version: 0.12.3
 	Author URI: http://slimndap.com/
 	Text Domain: wp_theatre
 	Domain Path: /lang
@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 	
-$wpt_version = '0.12.2';
+$wpt_version = '0.12.3';
 
 class WP_Theatre {
 	function __construct() {
@@ -55,6 +55,7 @@ class WP_Theatre {
 		$this->cart = new WPT_Cart();
 		$this->production_permalink = new WPT_Production_Permalink();
 		$this->bulk_editor = new WPT_Bulk_Editor();
+		$this->extensions_updater= new WPT_Extensions_Updater();
 		if (is_admin()) {
 		} else {
 			$this->frontend = new WPT_Frontend();
@@ -121,10 +122,12 @@ class WP_Theatre {
 		require_once(dirname(__FILE__) . '/functions/wpt_listing_page.php');	
 		require_once(dirname(__FILE__) . '/functions/wpt_calendar.php');	
 		require_once(dirname(__FILE__) . '/functions/wpt_filter.php');	
-		require_once(dirname(__FILE__) . '/functions/wpt_importer.php');	
 		require_once(dirname(__FILE__) . '/functions/wpt_cart.php');	
 		require_once(dirname(__FILE__) . '/functions/wpt_bulk_editor.php');	
 
+		require_once(dirname(__FILE__) . '/functions/extensions/wpt_extensions_updater.php');	
+
+		require_once(dirname(__FILE__) . '/functions/wpt_importer.php');	
 
 		if (is_admin()) {
 		} else {

@@ -2,10 +2,10 @@
 /*
 	
 	Plugin Name: Theater
-	Plugin URI: http://wordpress.org/plugins/theatre/
+	Plugin URI: http://theater.slimndap.com/
 	Description: Turn your Wordpress website into a theater website.
-	Author: Jeroen Schmit, Slim & Dapper
-	Version: 0.12.7
+	Author: Jeroen Schmit
+	Version: 0.13
 	Author URI: http://slimndap.com/
 	Text Domain: wp_theatre
 	Domain Path: /lang
@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 	
-$wpt_version = '0.12.7';
+$wpt_version = '0.13';
 
 class WP_Theatre {
 	function __construct() {
@@ -51,6 +51,7 @@ class WP_Theatre {
 		$this->listing_page = new WPT_Listing_Page();
 		$this->calendar = new WPT_Calendar();
 		$this->filter = new WPT_Filter();
+		$this->event_admin = new WPT_Event_Admin();
 		$this->event_editor = new WPT_Event_Editor();
 		$this->cart = new WPT_Cart();
 		$this->production_permalink = new WPT_Production_Permalink();
@@ -107,6 +108,7 @@ class WP_Theatre {
 		require_once(dirname(__FILE__) . '/functions/wpt_productions.php');
 
 		require_once(dirname(__FILE__) . '/functions/wpt_event.php');
+		require_once(dirname(__FILE__) . '/functions/wpt_event_admin.php');	
 		require_once(dirname(__FILE__) . '/functions/wpt_event_editor.php');	
 		require_once(dirname(__FILE__) . '/functions/wpt_event_template.php');	
 

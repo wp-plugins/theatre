@@ -127,6 +127,10 @@ Release Date: September 3rd, 2015
 
 See the [release post](http://theater.slimndap.com/theater-for-wordpress-0-13-released/?utm_source=wordpress.org&utm_medium=web&utm_content=changelog&utm_campaign=readme.txt) for examples.
 
+* Bugfixes
+	* Fixed a problem in production listings with events that start before 1-1-1970.
+	* Visibility of ticket buttons didn't account for timezones.
+	* Pagination for listings wasn't working when the listing page was the same as the front page.
 
 = 0.12 =
 
@@ -309,6 +313,9 @@ Release Date: December 29th, 2014
 * Basic version of the plugin.
 
 == Upgrade Notice ==
+
+= 0.13.1 =
+Fixes related to events that start before 1-1-1970, disappearing ticket buttons and list pagination on the front page.
 
 = 0.13 =
 Adds date filtering for production listings.
